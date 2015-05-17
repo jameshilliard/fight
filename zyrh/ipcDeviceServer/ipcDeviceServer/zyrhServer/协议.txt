@@ -1,0 +1,43 @@
+
+1.获取m3u8文件，也就是观看的地址
+http://httpIp:httpPort/live/CmdGetM3u8?devid=dx30&channel=1&devline=0
+参数
+devid:设备ID
+channel:设备通道号
+devline：设备线路号
+
+2.云台控制协议
+http://httpIp:httpPort/CmdPtzControl?devid=dx30&channel=1&ptzcmd=0&action=1&param=1
+
+参数
+devid:设备ID
+channel:设备通道号
+ptzcmd：云台控制命令
+action：停止或者开始
+param： 云台控制参数
+
+3.获取到设备信息
+http://httpIp:httpPort/CmdGetDevList?
+例子
+http://127.0.0.1:8083/CmdGetDevList?action=getDeviceBaseInfo&user=zyrh&pwd=12345&getOnlineDevice=true
+
+
+4.开始rtmp播放
+http://httpIp:httpPort/CmdStartRtmp?devid=dx30&channel=1&devline=0&url=rtmp://192.168.1.85:1935/live/dx3001
+参数
+devid:设备ID
+channel:设备通道号
+devline：设备线路号
+url:rtmp地址
+返回json
+ret：100 成功 101 失败
+msg：消息，失败显示此消息
+5.停止rtmp播放
+http://httpIp:httpPort/CmdStopRtmp?devid=dx30&channel=1
+参数
+devid:设备ID
+channel:设备通道号
+返回json
+ret：100 成功 101 失败
+msg：消息，失败显示此消息
+

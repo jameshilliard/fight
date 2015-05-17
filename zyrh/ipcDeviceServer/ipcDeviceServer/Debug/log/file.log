@@ -1,0 +1,19 @@
+2015-05-05 01:00:48 Info: sdk重新取流 设备ID:dx01 设备通道号:1,设备线路号:0,m_wmp_handle:0,取流返回:0 
+2015-05-05 01:00:50 Info: 停止解包 m_nAnalyzeHandle 0 devid:dx01
+2015-05-05 01:00:50 Info: sdk重新取流 设备ID:dx01 设备通道号:1,设备线路号:0,m_wmp_handle:0,取流返回:0 
+2015-05-05 01:18:41 Info: sdk重新取流 设备ID:dx01 设备通道号:1,设备线路号:0,m_wmp_handle:0,取流返回:0 
+2015-05-05 01:18:42 Info: 停止解包 m_nAnalyzeHandle 0 devid:dx01
+2015-05-05 01:18:43 Info: sdk重新取流 设备ID:dx01 设备通道号:1,设备线路号:0,m_wmp_handle:0,取流返回:0 
+2015-05-05 01:18:49 Info: 停止解包 m_nAnalyzeHandle 0 devid:dx01
+2015-05-05 01:18:49 Info: sdk重新取流 设备ID:dx01 设备通道号:1,设备线路号:0,m_wmp_handle:0,取流返回:0 
+2015-05-05 01:18:55 Info: 停止解包 m_nAnalyzeHandle 0 devid:dx01
+2015-05-05 01:18:55 Info: sdk重新取流 设备ID:dx01 设备通道号:1,设备线路号:0,m_wmp_handle:0,取流返回:0 
+2015-05-05 01:19:00 Info: 停止解包 m_nAnalyzeHandle 0 devid:dx01
+2015-05-05 01:21:20 Info: sdk重新取流 设备ID:dx32 设备通道号:1,设备线路号:0,m_wmp_handle:0,取流返回:0 
+2015-05-05 01:21:22 Info: 停止解包 m_nAnalyzeHandle 0 devid:dx32
+2015-05-05 01:21:22 Info: sdk重新取流 设备ID:dx32 设备通道号:1,设备线路号:0,m_wmp_handle:0,取流返回:0 
+2015-05-05 01:21:31 Info: 停止解包 m_nAnalyzeHandle 0 devid:dx32
+2015-05-05 01:25:17 Info: sdk重新取流 设备ID:dx32 设备通道号:1,设备线路号:0,m_wmp_handle:0,取流返回:0 
+2015-05-05 01:25:28 Info: sdk重新取流 设备ID:dx01 设备通道号:1,设备线路号:0,m_wmp_handle:1,取流返回:0 
+2015-05-05 01:25:29 Info: 停止解包 m_nAnalyzeHandle 0 devid:dx32
+2015-05-05 01:25:47 Info: 停止解包 m_nAnalyzeHandle 1 devid:dx01
