@@ -38,6 +38,7 @@
 #include "Poco/Thread.h"
 #include "Poco/Mutex.h"
 
+using Poco::Timespan;
 using Poco::Thread;
 using Poco::Net::ServerSocket;
 using Poco::Net::StreamSocket;

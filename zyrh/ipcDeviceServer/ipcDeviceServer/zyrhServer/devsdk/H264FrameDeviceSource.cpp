@@ -478,6 +478,41 @@ int H264FrameDeviceSource::StartDev(char* sServerIp,unsigned int nServerPort,uns
 	m_io_timer_Ptr->async_wait(boost::bind(&H264FrameDeviceSource::OnTime,shared_from_this(),boost::asio::placeholders::error));
 	return ret;
 }
+
+bool H264FrameDeviceSource::StartDev()
+{
+	boost::asio::detail::mutex::scoped_lock lock(mutex_Lock);
+	if(m_wmp_handle != -1)
+	{
+		return false;
+	}
+	StopPlay();
+	m_AudioBuflist.clear();
+	m_VideoBuflist.clear();
+	m_wmp_handle = WMP_Create();
+	if (m_wmp_handle == -1)
+	{
+		return false;
+	}
+	int ret =  WMP_Login(m_wmp_handle,m_sServerIp.c_str(),m_nServerPort, m_sDevId.c_str(),m_spassword.c_str(),m_nServerLine);
+	if (ret == -1)
+	{
+		return false;
+	}
+	ret = WMP_Play(m_wmp_handle,
+		m_sDevId.c_str(),//devid:设备ID
+		m_nnchannel,//channel:设备通道号
+		WMP_STREAM_MAIN, //stream_type:WMP_STREAM_MAIN 1-主码流   WMP_STREAM_SUB 2-子码流 
+		WMP_TRANS_UDP,//trans_mode:WMP_TRANS_TCP/WMP_TRANS_UDP  #define WMP_TRANS_TCP	1#define WMP_TRANS_UDP	2
+		m_nDevLine,//dev_line:设备线路号
+		CBF_OnStreamPlay, (void*)this,(int *)&m_stream_handle);
+	g_logger.TraceInfo("sdk重新取流 设备ID:%s 设备通道号:%d,设备线路号:%d,m_wmp_handle:%d,取流返回:%d ",m_sDevId.c_str(),m_nnchannel,m_nDevLine,m_wmp_handle,ret);
+	if (ret != 0)
+	{
+		return false;
+	}
+	return true;
+}
 bool H264FrameDeviceSource::ReStartDev()
 {
 	boost::asio::detail::mutex::scoped_lock lock(mutex_Lock);

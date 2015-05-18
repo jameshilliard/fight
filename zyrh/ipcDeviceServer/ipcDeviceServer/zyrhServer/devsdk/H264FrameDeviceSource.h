@@ -29,6 +29,7 @@ public:
 	int StartDev(char* sServerIp,unsigned int nServerPort,unsigned int nServerLine,char* sdevId,char* password,unsigned int nDevLine,unsigned int nchannel,int nType);
 	void StopDev();
 	bool ReStartDev();
+	bool StartDev();
 	bool InPutPsData(unsigned char* videoPsBuf,unsigned int  psBufsize,int nType );
 	void handleVideo(uint8_t* vidoedata,uint32_t nsize,__int64 TimeStamp,bool bkey);
 	void handleAudioAac(uint8_t* aacbuf,uint32_t bufsize,__int64 timeStamp,int nChannel,int nSoundRate);

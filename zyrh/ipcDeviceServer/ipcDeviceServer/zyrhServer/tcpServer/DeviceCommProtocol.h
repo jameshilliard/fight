@@ -1233,6 +1233,20 @@ typedef struct
 }USER_INFO;
 
 
+typedef struct{
+	UINT16	showOSD;
+	UINT16  charCnt;
+	UINT16	upLeftX;
+	UINT16  upLeftY;
+	unsigned char    osdCode[44];
+}NET_OSD_CFG;
+
+#define MAX_NETOSD_LINE_V30			8			/* 最多8行字符 */
+
+typedef struct{
+	UINT32	length;
+	NET_OSD_CFG osdCfg[MAX_NETOSD_LINE_V30];
+}NETPARAM_NETOSD_CFG_V30;
 
 #define CLOSE_ALL		0	/* 关闭(或断开)所有开关 */
 #define CAMERA_PWRON	1	/* 接通摄像机电源 */

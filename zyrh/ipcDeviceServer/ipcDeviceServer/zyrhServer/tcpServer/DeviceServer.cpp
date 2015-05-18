@@ -193,10 +193,6 @@ STATUS DeviceServerConnection::reloveOnePacket(StreamSocket  &connfd,char *recvb
 		NET_INFO(("NETCMD_GET_11000.\n"));
 		retVal = netClientReloveCmd11000(connfd, recvbuff, pClientSockAddr);
 		break;
-	case NETCMD_SET_TIMECFG:       		/*set time config param*/
-		NET_INFO(("NETCMD_SET_TIMECFG.\n"));
-		retVal = netClientSetDevTime(connfd, recvbuff, pClientSockAddr);
-		break;
 	case NETCMD_GET_ALARMINCFG_V30:    	/*get alarm in config param*/
 		NET_INFO(("NETCMD_GET_ALARMINCFG_V30.\n"));
 		retVal = netClientGetAlarmInCfgV30(connfd, recvbuff, pClientSockAddr);
@@ -225,12 +221,20 @@ STATUS DeviceServerConnection::reloveOnePacket(StreamSocket  &connfd,char *recvb
 	case NETCMD_GETPTZCONTROL:
 		NET_INFO(("NETCMD_GETPTZCONTROL.\n"));
 		break;
+	case NETCMD_GET_SHOWSTRING_V30:  		/*get OSD strings V30*/
+		NET_INFO(("NETCMD_GET_SHOWSTRING_V30.\n"));
+		retVal = netClientGetOSDCfgV30(connfd, recvbuff, pClientSockAddr);
+		break;
 	case 0x113406:
 	case 0x113402:
 	case 0x113400:
 		NET_INFO(("netClientReloveCmd1134.\n"));
 		retVal = netClientReloveCmd1134(connfd, recvbuff, pClientSockAddr,netCmdHeader.netCmd);
 		break;
+	case NETCMD_SET_TIMECFG:       		/*set time config param*/
+		NET_INFO(("NETCMD_SET_TIMECFG.\n"));
+		//retVal = netClientSetDevTime(connfd, recvbuff, pClientSockAddr);
+		//break;
 	default:
 		NET_INFO(("no support cmd.\n"));
 		char tempString[]={0x00,0x00,0x00,0x10,0x00,0x00,0x00,0x1,0x00,0x00,0x00,0x1,0x00,0x00,0x00,0x0};
@@ -244,6 +248,8 @@ void DeviceServerConnection::run()
 {
 	int  cmdLength=0;
 	char buffer[BUFFER_SIZE];
+	Timespan mTimespan(30,0);
+	socket().setReceiveTimeout(mTimespan);
 	NET_INFO(("tcpServer:%d new connect\n",m_IpcDeviceParams->m_commServerPort));
 	while(1)
 	{
@@ -251,6 +257,12 @@ void DeviceServerConnection::run()
 		if(iRet==sizeof(cmdLength))
 		{
 			cmdLength=ntohl(cmdLength);
+			if(cmdLength>20*1024)
+			{
+				NET_INFO(("tcpServer:%d receive data erreur %d\n",m_IpcDeviceParams->m_commServerPort,cmdLength));
+				socket().shutdown();
+				break;
+			}
 			iRet = socket().receiveBytes(buffer+sizeof(cmdLength),cmdLength-4);
 			if(iRet==(cmdLength-4))
 			{
@@ -261,13 +273,16 @@ void DeviceServerConnection::run()
 			else
 			{
 				NET_INFO(("tcpServer:%d receive data no enough is %d\n",m_IpcDeviceParams->m_commServerPort,iRet));
+				socket().shutdown();
+				break;
 			}
 		}
 		else if(iRet<=0)
 		{
 			NET_INFO(("tcpServer:%d iRet %d breakout\n",m_IpcDeviceParams->m_commServerPort,iRet));
+			socket().shutdown();
 			break;
-		}	
+		}
 		Thread::sleep(100);
 	}
 }
@@ -344,9 +359,12 @@ void DeviceServer::runCommServerActivity()
 	DeviceServerConnectionFactory *ptrDeviceServerConnectionFactory=new DeviceServerConnectionFactory(m_ipcDeviceParams,m_nH264FrameDeviceSource);
 	TCPServer srv(ptrDeviceServerConnectionFactory,m_commServerPort);
 	srv.start();
+	
 	while(m_commServerStart)
 	{
 		//printf("commServer %d running. totalConnections：%d refuse :%d\n",m_commServerPort,srv.totalConnections(),srv.refusedConnections());
+		//printf("commServer %d running. maxConcurrentConnections：%d currentConnections :%d\n",m_commServerPort,srv.maxConcurrentConnections(),srv.currentConnections());
+		//printf("commServer %d running. queuedConnections：%d\n",m_commServerPort,srv.queuedConnections());
 		Thread::sleep(5000);
 	}
 	srv.stop();
@@ -393,7 +411,7 @@ int DeviceServer::startRtspServer(int rtspServerPort)
 
  	m_nH264FrameDeviceSource = new H264FrameDeviceSource(m_sdkServerData);
 	//上面的部分除了模拟网络传输的部分外其他的基本跟live555提供的demo一样，而下面则修改为网络传输的形式，为此重写addSubsession的第一个参数相关文件
-	char const* streamName = "mpeg4/ch01/main/av_stream";
+	char const* streamName = "ch1/main/av_stream";
 	ServerMediaSession* sms = ServerMediaSession::createNew(*env, streamName, streamName,descriptionString);
 	sms->addSubsession(H264LiveVideoServerMediaSubssion::createNew(*env, reuseFirstSource,m_nH264FrameDeviceSource));//修改为自己实现的H264LiveVideoServerMediaSubssion
 	rtspServer->addServerMediaSession(sms);
