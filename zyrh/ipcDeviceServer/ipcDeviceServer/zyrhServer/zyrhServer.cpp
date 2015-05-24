@@ -2,7 +2,6 @@
 //
 
 #include "stdafx.h"
-
 #include "CrashRpt/CrashRpt.h"
 //
 // win_main_server.cpp
@@ -15,20 +14,21 @@
 //
 
 //#define BOOST_LIB_DIAGNOSTIC
-
 #include <iostream>
 #include <string>
+#include "devsdk/wmpclient.h"
+#include "./GlobalHttpFun.h"
+#include <GlobalParam.h>
+#include "tcpServer/DeviceServer.h"
+#include <GlobalClass.h>
+#include "devsdk/DevManager.h"
+
+#if 0
 #include <bas/server.hpp>
 #include <bas/service_handler.hpp>
 #include <boost/thread.hpp>
 #include <server_work_allocator.hpp>
 #include "server/http_server_work_allocator.hpp"
-#include "devsdk/wmpclient.h"
-#include "./GlobalHttpFun.h"
-#include <GlobalParam.h>
-#include "tcpServer/DeviceServer.h"
-
-
 typedef bas::server<server_work, server_work_allocator> server;
 typedef bas::service_handler_pool<server_work, server_work_allocator> service_handler_pool_type;
 
@@ -106,6 +106,8 @@ void StartServer()
 	// 			CGlobalParam::GetInstance()->m_nRtmpkServerPort);
 	httpServer->run();
 }
+boost::shared_ptr<server> httpServer;
+#endif
 
 //定义全局函数变量
 void Init();
@@ -115,23 +117,13 @@ BOOL Uninstall();
 void LogEvent(LPCSTR pszFormat, ...);
 void WINAPI ServiceMain();
 void WINAPI ServiceStrl(DWORD dwOpcode);
-
-CHAR szServiceName[] = ("ZyrhRtmpServer");
+CHAR szServiceName[] = ("wmp-pl");
 BOOL bInstall;
 SERVICE_STATUS_HANDLE hServiceStatus;
 SERVICE_STATUS status;
 DWORD dwThreadID;
-boost::shared_ptr<server> httpServer;
 
-// int APIENTRY WinMain(HINSTANCE hInstance,
-//                      HINSTANCE hPrevInstance,
-//                      LPSTR     lpCmdLine,
-//                      int       nCmdShow)
-// {
-// 	
-// 
-// 	return 0;
-// }
+
 //*********************************************************
 //Functiopn:			Init
 //Description:			初始化
@@ -192,6 +184,9 @@ void StartDeviceServer()
 	std::string path = FilePath;
 	path += "/config.ini";
 
+	CGlobalClass::GetInstance()->GetDevManager()->StartUpateDeviceInfo();
+
+	#if 0
 	GetPrivateProfileString("ZyrhOpenService","httpurl","",buf,2048,path.c_str());
 	sHttpUrl = buf;
 
@@ -283,16 +278,16 @@ void StartDeviceServer()
 		vcDeviceServer.push_back(stDeviceServer); 	
 		Sleep(100);
 	}
-
-}
-int _tmain(int argc, _TCHAR* argv[])
-{
-	StartDeviceServer();
+	#endif
 	while(1)
 	{
 		Sleep(10000);
 		//printf("deviceServer is run \n");
 	}
+}
+int _tmain(int argc, _TCHAR* argv[])
+{
+	StartDeviceServer();
 	return 0;
 }
 //*********************************************************
@@ -331,9 +326,7 @@ void WINAPI ServiceMain()
 	SetServiceStatus(hServiceStatus, &status);
 
 	//模拟服务的运行，10后自动退出。应用时将主要任务放于此即可
-	
-	//
-	StartServer();
+	StartDeviceServer();
 
     status.dwCurrentState = SERVICE_STOPPED;
     SetServiceStatus(hServiceStatus, &status);
@@ -556,37 +549,9 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 					 HINSTANCE hPrevInstance,
 					 LPSTR     lpCmdLine,
 					 int       nCmdShow)
-//int main(int ,char* argv[])
 {
-// 	Init();
-// 
-// 	dwThreadID = ::GetCurrentThreadId();
-// 
-// 	SERVICE_TABLE_ENTRY st[] =
-// 	{
-// 		{ (LPSTR)szServiceName, (LPSERVICE_MAIN_FUNCTION)ServiceMain },
-// 		{ NULL, NULL }
-// 	};
-// 	Install();
-// 	if (stricmp(lpCmdLine, "-i") == 0)
-// 	{
-// 		MessageBox(NULL, ("Couldn't open service manager -i"), szServiceName, MB_OK);
-// 		Install();
-// 	}
-// 	else if (stricmp(lpCmdLine, "-u") == 0)
-// 	{
-// 		Uninstall();
-// 	}
-// 	else
-// 	{
-// 		if (!::StartServiceCtrlDispatcher(st))
-// 		{
-// 			LogEvent(("Register Service Main Function Error!"));
-// 		}
-// 	}
-	StartServer();
-	
 
+	StartDeviceServer();
 	return 0;
 }
 

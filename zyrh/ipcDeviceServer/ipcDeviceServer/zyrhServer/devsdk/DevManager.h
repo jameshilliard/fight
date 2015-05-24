@@ -15,10 +15,12 @@ public:
 	void DelDevTimeOut(std::string sDevId,int nChannel);
 	void StartCheckTimeOut();
 	void CheckDevTimeOut();
+	void StartUpateDeviceInfo();
+	void UpateDeviceInfo();
 private:
 	CMyMap<std::string,boost::shared_ptr<CdevSdk>> m_DevList;
 	CMyMap2<boost::shared_ptr<CdevSdk>> m_DevListIndex;
 	boost::asio::detail::mutex mutex_;
 	CThread m_Thread;
-
+	CThread m_UpateDeviceInfoThread;
 };

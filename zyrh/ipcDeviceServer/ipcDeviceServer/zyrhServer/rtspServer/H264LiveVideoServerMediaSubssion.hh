@@ -12,16 +12,16 @@
 class H264LiveVideoServerMediaSubssion : public H264VideoFileServerMediaSubsession {
 
 public:
-	static H264LiveVideoServerMediaSubssion* createNew(UsageEnvironment& env, Boolean reuseFirstSource,H264FrameDeviceSource *ptH264FrameDeviceSource);
+	static H264LiveVideoServerMediaSubssion* createNew(UsageEnvironment& env, Boolean reuseFirstSource,CdevSdk *ptCdevSdk);
 
 protected: // we're a virtual base class
-	H264LiveVideoServerMediaSubssion(UsageEnvironment& env, Boolean reuseFirstSource,H264FrameDeviceSource *ptH264FrameDeviceSource);
+	H264LiveVideoServerMediaSubssion(UsageEnvironment& env, Boolean reuseFirstSource,CdevSdk *ptCdevSdk);
 	~H264LiveVideoServerMediaSubssion();
 
 protected: // redefined virtual functions
 	FramedSource* createNewStreamSource(unsigned clientSessionId,unsigned& estBitrate);
 public:
-	H264FrameDeviceSource *m_ptH264FrameDeviceSource;
+	CdevSdk *m_ptCdevSdk;
 	char fFileName[100];
 	//int Server_datasize;//数据区大小指针
 	//unsigned char  *Server_databuf;//数据区指针

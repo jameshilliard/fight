@@ -19,8 +19,6 @@
 
 #define BUFSIZE 1024*1024*1
 
-Poco::Mutex _mutex;
-
 void announceStream(RTSPServer* rtspServer, ServerMediaSession* sms,char const* streamName)//显示RTSP连接信息
 {
 	char* url = rtspServer->rtspURL(sms);
@@ -29,11 +27,11 @@ void announceStream(RTSPServer* rtspServer, ServerMediaSession* sms,char const* 
 	delete[] url;
 }
 
-DeviceServerConnection::DeviceServerConnection(const StreamSocket& s,IpcDeviceParams *ipcDeviceParams,H264FrameDeviceSource * nH264FrameDeviceSource): 
+DeviceServerConnection::DeviceServerConnection(const StreamSocket& s,IpcDeviceParams *ipcDeviceParams,CdevSdk * nCdevSdk): 
 	TCPServerConnection(s)
 {
 	m_IpcDeviceParams=ipcDeviceParams;
-	m_nH264FrameDeviceSource=nH264FrameDeviceSource;
+	m_nCdevSdk=nCdevSdk;
 }
 
 int concovtPtzData(NET_PTZ_CTRL_DATA netPTZCtrlData,ptzControl *mptzControl)
@@ -205,15 +203,15 @@ STATUS DeviceServerConnection::reloveOnePacket(StreamSocket  &connfd,char *recvb
 		NET_INFO(("NETCMD_PTZ.\n"));
 		retVal = netClientPTZControl(connfd, recvbuff, pClientSockAddr,netPTZCtrlData);
 		concovtPtzData(netPTZCtrlData,&m_IpcDeviceParams->m_ptzControl);
-		if(m_nH264FrameDeviceSource!=NULL)
-			retVal = m_nH264FrameDeviceSource->CmdPtzControl(m_IpcDeviceParams->m_sDevId,m_IpcDeviceParams->m_nnchannel,m_IpcDeviceParams->m_ptzControl.ptz_cmd,m_IpcDeviceParams->m_ptzControl.action,m_IpcDeviceParams->m_ptzControl.param,ptzString);
+		if(m_nCdevSdk!=NULL)
+			retVal = m_nCdevSdk->CmdPtzControl(m_IpcDeviceParams->m_sDevId,m_IpcDeviceParams->m_nnchannel,m_IpcDeviceParams->m_ptzControl.ptz_cmd,m_IpcDeviceParams->m_ptzControl.action,m_IpcDeviceParams->m_ptzControl.param,ptzString);
 		break;
 	case DVR_PTZWITHSPEED:          			/*PTZ ctrl with speed*/
 		NET_INFO(("DVR_PTZWITHSPEED.\n"));
 		retVal = netClientPTZControlWithSpeed(connfd, recvbuff, pClientSockAddr,netPTZCtrlData);
 		concovtPtzData(netPTZCtrlData,&m_IpcDeviceParams->m_ptzControl);
-		if(m_nH264FrameDeviceSource!=NULL)
-			retVal = m_nH264FrameDeviceSource->CmdPtzControl(m_IpcDeviceParams->m_sDevId,m_IpcDeviceParams->m_nnchannel,m_IpcDeviceParams->m_ptzControl.ptz_cmd,m_IpcDeviceParams->m_ptzControl.action,m_IpcDeviceParams->m_ptzControl.param,ptzString);
+		if(m_nCdevSdk!=NULL)
+			retVal = m_nCdevSdk->CmdPtzControl(m_IpcDeviceParams->m_sDevId,m_IpcDeviceParams->m_nnchannel,m_IpcDeviceParams->m_ptzControl.ptz_cmd,m_IpcDeviceParams->m_ptzControl.action,m_IpcDeviceParams->m_ptzControl.param,ptzString);
 		break;
 	case NETCMD_TRANSPTZ:
 		NET_INFO(("NETCMD_TRANSPTZ.\n"));
@@ -233,8 +231,8 @@ STATUS DeviceServerConnection::reloveOnePacket(StreamSocket  &connfd,char *recvb
 		break;
 	case NETCMD_SET_TIMECFG:       		/*set time config param*/
 		NET_INFO(("NETCMD_SET_TIMECFG.\n"));
-		//retVal = netClientSetDevTime(connfd, recvbuff, pClientSockAddr);
-		//break;
+		retVal = netClientSetDevTime(connfd, recvbuff, pClientSockAddr);
+		break;
 	default:
 		NET_INFO(("no support cmd.\n"));
 		char tempString[]={0x00,0x00,0x00,0x10,0x00,0x00,0x00,0x1,0x00,0x00,0x00,0x1,0x00,0x00,0x00,0x0};
@@ -259,7 +257,7 @@ void DeviceServerConnection::run()
 			cmdLength=ntohl(cmdLength);
 			if(cmdLength>20*1024)
 			{
-				NET_INFO(("tcpServer:%d receive data erreur %d\n",m_IpcDeviceParams->m_commServerPort,cmdLength));
+				NET_INFO(("tcpServer:%d receive data error %d\n",m_IpcDeviceParams->m_commServerPort,cmdLength));
 				socket().shutdown();
 				break;
 			}
@@ -287,15 +285,15 @@ void DeviceServerConnection::run()
 	}
 }
 	
-DeviceServerConnectionFactory::DeviceServerConnectionFactory(IpcDeviceParams *ipcDeviceParams,H264FrameDeviceSource * nH264FrameDeviceSource)
+DeviceServerConnectionFactory::DeviceServerConnectionFactory(IpcDeviceParams *ipcDeviceParams,CdevSdk * nCdevSdk)
 {
 	m_IpcDeviceParams=ipcDeviceParams;
-	m_nH264FrameDeviceSource=nH264FrameDeviceSource;
+	m_nCdevSdk=nCdevSdk;
 }
 
 TCPServerConnection* DeviceServerConnectionFactory::createConnection(const StreamSocket& socket)
 {
-	return new DeviceServerConnection(socket,m_IpcDeviceParams,m_nH264FrameDeviceSource);
+	return new DeviceServerConnection(socket,m_IpcDeviceParams,m_nCdevSdk);
 }
 
 DeviceServer::DeviceServer(int port,int rtspPort,std::string userName,std::string secret)
@@ -306,7 +304,7 @@ DeviceServer::DeviceServer(int port,int rtspPort,std::string userName,std::strin
 	m_secret=secret;
 	m_commServerStart=false;
 	m_rtspServerStart=false;
-	m_nH264FrameDeviceSource=NULL;
+	m_nCdevSdk=NULL;
 }
 
 DeviceServer::~DeviceServer()
@@ -330,6 +328,8 @@ void DeviceServer::start()
 
 void DeviceServer::stop()
 {
+	m_commServerStart=false;
+	m_rtspServerStart=false;
 	m_commServerThread.StopThread();
 	m_rtspServerThread.StopThread();
 }
@@ -352,11 +352,11 @@ void DeviceServer::runCommServerActivity()
 	m_ipcDeviceParams->m_secret=m_secret;
 	m_ipcDeviceParams->m_sDevId=m_sdkServerData.m_sDevId;
 	m_ipcDeviceParams->m_nnchannel=m_sdkServerData.m_nnchannel;
-	while(!m_nH264FrameDeviceSource)
+	while(!m_nCdevSdk)
 	{
 		Thread::sleep(1000);
 	}
-	DeviceServerConnectionFactory *ptrDeviceServerConnectionFactory=new DeviceServerConnectionFactory(m_ipcDeviceParams,m_nH264FrameDeviceSource);
+	DeviceServerConnectionFactory *ptrDeviceServerConnectionFactory=new DeviceServerConnectionFactory(m_ipcDeviceParams,m_nCdevSdk);
 	TCPServer srv(ptrDeviceServerConnectionFactory,m_commServerPort);
 	srv.start();
 	
@@ -409,11 +409,11 @@ int DeviceServer::startRtspServer(int rtspServerPort)
 	free(databuf);//释放掉内存
 #endif
 
- 	m_nH264FrameDeviceSource = new H264FrameDeviceSource(m_sdkServerData);
+ 	m_nCdevSdk = new CdevSdk(m_sdkServerData);
 	//上面的部分除了模拟网络传输的部分外其他的基本跟live555提供的demo一样，而下面则修改为网络传输的形式，为此重写addSubsession的第一个参数相关文件
 	char const* streamName = "ch1/main/av_stream";
 	ServerMediaSession* sms = ServerMediaSession::createNew(*env, streamName, streamName,descriptionString);
-	sms->addSubsession(H264LiveVideoServerMediaSubssion::createNew(*env, reuseFirstSource,m_nH264FrameDeviceSource));//修改为自己实现的H264LiveVideoServerMediaSubssion
+	sms->addSubsession(H264LiveVideoServerMediaSubssion::createNew(*env, reuseFirstSource,m_nCdevSdk));//修改为自己实现的H264LiveVideoServerMediaSubssion
 	rtspServer->addServerMediaSession(sms);
 	announceStream(rtspServer, sms, streamName);//提示用户输入连接信息
 	try

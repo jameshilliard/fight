@@ -4,26 +4,30 @@
 #include <ffmpegEncoder.h>
 #include <aac/AACEncoder.h>
 #include <publicHead.h>
-#include <boost/shared_ptr.hpp>
-#include <boost/date_time/posix_time/posix_time_types.hpp>
-#include  <bas/io_service_pool.hpp>
-#include <boost/system/error_code.hpp>
-#include <boost/enable_shared_from_this.hpp>
-#include "../stdafx.h"
 #include "wmpclient.h"
 #include "ts/M3U8List.h"
 #include "g722/HCNetSDK.h"
 #include "g711/g711.h"
-#include "rtmp/MyRtmp.h"
+#include "./SDKServerData.h"
+#include <boost/shared_ptr.hpp>
+#include <boost/date_time/posix_time/posix_time_types.hpp>
+#include <bas/io_service_pool.hpp>
+#include <boost/system/error_code.hpp>
+#include <boost/asio.hpp>
+#include <boost/bind.hpp>
+#include <boost/enable_shared_from_this.hpp>
+#include <boost/asio/detail/mutex.hpp>
 
 class  CdevSdk:public  boost::enable_shared_from_this<CdevSdk>
 {
 public:
 	CdevSdk();
+	CdevSdk(SDKServerData nSdkServerData);
 	~CdevSdk();
 	int StartDev(char* sServerIp,unsigned int nServerPort,unsigned int nServerLine,char* sdevId,char* password,unsigned int nDevLine,unsigned int nchannel,int nType);
 	void StopDev();
 	bool ReStartDev();
+	bool StartDev();
 	bool InPutPsData(unsigned char* videoPsBuf,unsigned int  psBufsize,int nType );
 	void handleVideo(uint8_t* vidoedata,uint32_t nsize,__int64 TimeStamp,bool bkey);
 	void handleAudioAac(uint8_t* aacbuf,uint32_t bufsize,__int64 timeStamp,int nChannel,int nSoundRate);
@@ -34,6 +38,12 @@ public:
 	std::string CreateM3u8File();
 	void OnTime(const boost::system::error_code& e);
 	int CmdPtzControl(std::string sdevid,unsigned int nchannel,int ptz_cmd,int action,int param,std::string& smsg );
+
+	//zss++
+	bool GetVideoData(std::vector<std::string > *vDeviceSource,unsigned char *ptData,unsigned int &frameSize,unsigned int dataMaxSize,unsigned int &curVideoIndex);
+	bool addDeviceSource(std::vector<std::string > *vDeviceSource);
+	bool removeDeviceSource(std::vector<std::string > *vDeviceSource);
+	//zss--
 private:
 	void ResetParam();
 	WMP_HANDLE m_wmp_handle;
@@ -68,16 +78,17 @@ public:
 	int m_nSystem_Format;
 	boost::asio::detail::mutex mutex_Lock;
 	boost::asio::detail::mutex mutex_HandleVideo;
-	CMyRtmp m_myRtmp;
+	
+	std::vector<std::vector<std::string > *> m_deviceSource;
 private:
 	int m_nTimeNow;
-
 
 	CThread m_pThread;
 	CThread m_pThreadAudio;
 
-	
-	
+	//zss++
+	SDKServerData m_SdkServerData;
+	//zss--
 	void handleEncoder();
 	void handleEncoderAudio();
 public:

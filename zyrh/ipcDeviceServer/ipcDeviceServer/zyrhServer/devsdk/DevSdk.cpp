@@ -6,8 +6,13 @@
 #include <GlobalParam.h>
 #include "DevManager.h"
 #include "AnalyzeDataInterface.h"
+
+
 #define MYSYSTEM_MPEG2_PS   0x02	// PS封装
-void CALLBACK DecCBFun(long nPort,char * pBuf,long nSize,
+
+
+
+static void CALLBACK DecCBFun(long nPort,char * pBuf,long nSize,
 					   FRAME_INFO * pFrameInfo, 
 					   long nReserved1,long nReserved2)
 {
@@ -381,7 +386,38 @@ CdevSdk::CdevSdk()
 
 	m_nCheckDelTimeOut = 0;
 
+}
+CdevSdk::CdevSdk(SDKServerData nSdkServerData)
+{
+	m_nSkdPlayPort = -1;
+	m_h264Buf = new char[512*1024];
+	m_pffmpegEncoder = NULL;
+	m_pAacEncoder = NULL;
+	m_pG722 = NULL;
+	m_nAnalyzeHandle = -1;
+	m_nTimeNow = time(NULL);
+	boost::asio::io_service& _IoService = CGlobalClass::GetInstance()->GetIoservice()->get_io_service();
+	
+	m_io_timer_Ptr.reset(new boost::asio::deadline_timer(_IoService) );
+	m_pIoService = &_IoService;
+	
+	m_bStop = false;
 
+	m_nCheckDelTimeOut = 0;
+
+	//zss++
+	m_SdkServerData=nSdkServerData;
+	m_sServerIp = nSdkServerData.m_sSdkServerIp;
+	m_nServerPort = nSdkServerData.m_nSdkServerPort;
+	m_nServerLine = nSdkServerData.m_nServerLine;
+	m_spassword = nSdkServerData.m_spassword;
+	m_nDevLine = nSdkServerData.m_nDevLine;;
+	m_nnchannel = nSdkServerData.m_nnchannel;
+	m_sDevId = nSdkServerData.m_sDevId;
+	m_pM3u8List.m_sdveid = nSdkServerData.m_sDevId;
+	m_stream_handle=-1;
+	m_wmp_handle=-1;
+	//zss--
 }
 CdevSdk::~CdevSdk()
 {
@@ -430,13 +466,6 @@ int CdevSdk::StartDev(char* sServerIp,unsigned int nServerPort,unsigned int nSer
 	m_sDevId = sdevId;
 	m_pM3u8List.m_sdveid = sdevId;
 	
-	if (m_srtmpurl != "")
-	{
-		if (!m_myRtmp.OpenUrl(m_srtmpurl))
-		{
-			return -1;
-		}
-	}
 	m_wmp_handle = WMP_Create();
 	if (m_wmp_handle == -1)
 	{
@@ -458,6 +487,41 @@ int CdevSdk::StartDev(char* sServerIp,unsigned int nServerPort,unsigned int nSer
 	m_io_timer_Ptr->expires_from_now(boost::posix_time::seconds(5));
 	m_io_timer_Ptr->async_wait(boost::bind(&CdevSdk::OnTime,shared_from_this(),boost::asio::placeholders::error));
 	return ret;
+}
+
+bool CdevSdk::StartDev()
+{
+	boost::asio::detail::mutex::scoped_lock lock(mutex_Lock);
+	if(m_wmp_handle != -1)
+	{
+		return false;
+	}
+	StopPlay();
+	m_AudioBuflist.clear();
+	m_VideoBuflist.clear();
+	m_wmp_handle = WMP_Create();
+	if (m_wmp_handle == -1)
+	{
+		return false;
+	}
+	int ret =  WMP_Login(m_wmp_handle,m_sServerIp.c_str(),m_nServerPort, m_sDevId.c_str(),m_spassword.c_str(),m_nServerLine);
+	if (ret == -1)
+	{
+		return false;
+	}
+	ret = WMP_Play(m_wmp_handle,
+		m_sDevId.c_str(),//devid:设备ID
+		m_nnchannel,//channel:设备通道号
+		WMP_STREAM_MAIN, //stream_type:WMP_STREAM_MAIN 1-主码流   WMP_STREAM_SUB 2-子码流 
+		WMP_TRANS_UDP,//trans_mode:WMP_TRANS_TCP/WMP_TRANS_UDP  #define WMP_TRANS_TCP	1#define WMP_TRANS_UDP	2
+		m_nDevLine,//dev_line:设备线路号
+		CBF_OnStreamPlay, (void*)this,(int *)&m_stream_handle);
+	g_logger.TraceInfo("sdk重新取流 设备ID:%s 设备通道号:%d,设备线路号:%d,m_wmp_handle:%d,取流返回:%d ",m_sDevId.c_str(),m_nnchannel,m_nDevLine,m_wmp_handle,ret);
+	if (ret != 0)
+	{
+		return false;
+	}
+	return true;
 }
 bool CdevSdk::ReStartDev()
 {
@@ -502,6 +566,7 @@ int CdevSdk::CmdPtzControl(std::string sdevid,unsigned int nchannel,int ptz_cmd,
 		smsg = "设备未登陆";
 		return nSdkRet;
 	}
+	printf("sdk重新取流 设备ID:%s 设备通道号:%d,云台命令:%d,云台操作:%d,云台参数:%d ",sdevid.c_str(),m_nnchannel,ptz_cmd,action,param);
 	nSdkRet = WMP_PtzControl(m_wmp_handle,sdevid.c_str(),nchannel,ptz_cmd,action,param);
 
 	smsg = "sdk ret";
@@ -561,7 +626,6 @@ void CdevSdk::StopDev()
 		NET_DVR_ReleaseG722Decoder(m_pG722);
 		m_pG722 = NULL;
 	}
-	m_myRtmp.StopRtmp();
 
 }
 void CdevSdk::StopPlay()
@@ -595,6 +659,95 @@ void CdevSdk::StopPlay()
 	}
 
 }
+bool CdevSdk::addDeviceSource(std::vector<std::string > *vDeviceSource)
+{
+	boost::asio::detail::mutex::scoped_lock lock(mutex_HandleVideo);
+	if(m_deviceSource.size()>10)
+		return false;
+	m_deviceSource.push_back(vDeviceSource);
+	return true;
+}
+bool CdevSdk::removeDeviceSource(std::vector<std::string > *vDeviceSource)
+{
+	unsigned int i=0;
+	boost::asio::detail::mutex::scoped_lock lock(mutex_HandleVideo);
+	for (i=0; i<m_deviceSource.size(); i++)
+	{
+		if(m_deviceSource[i]==vDeviceSource)
+		{
+			m_deviceSource.erase(m_deviceSource.begin()+i);
+			return true;
+		}
+
+	}
+	return false;
+}
+bool CdevSdk::GetVideoData(std::vector<std::string > *vDeviceSource,unsigned char *ptData,unsigned int &frameSize,unsigned int dataMaxSize,unsigned int &curVideoIndex)
+{
+	unsigned int i=0;
+	bool bFindFlag=false;
+	{
+		boost::asio::detail::mutex::scoped_lock lock(mutex_HandleVideo);
+		for (i=0; i<m_deviceSource.size(); i++)
+		{
+			if(m_deviceSource[i]==vDeviceSource)
+			{
+				bFindFlag=true;
+			}
+		}
+	}
+	if(bFindFlag)
+	{
+		unsigned int timeOut=0;
+		do
+		{
+			Sleep(10);
+			timeOut++;
+			if(timeOut>300)
+				break;
+			bFindFlag=vDeviceSource->empty();
+		}while(bFindFlag);
+		boost::asio::detail::mutex::scoped_lock lock(mutex_HandleVideo);
+		if(!vDeviceSource->empty())
+		{
+			std::vector<std::string >::iterator it=vDeviceSource->begin();
+			frameSize=it->length();
+			//printf("this time:%d,this 0x%x,fFrameSize 1 is %d--%d-%d-\n",GetTickCount(),this,frameSize,curVideoIndex,dataMaxSize);
+			if(curVideoIndex!=0)
+			{	
+				frameSize=frameSize-curVideoIndex;
+			}
+			if(frameSize<=dataMaxSize)
+			{
+				memcpy(ptData,it->c_str()+curVideoIndex,frameSize);
+				curVideoIndex=0;
+			}	
+			else if(dataMaxSize>0)
+			{	
+				memcpy(ptData,it->c_str()+curVideoIndex,dataMaxSize);
+				frameSize=dataMaxSize;
+				curVideoIndex=curVideoIndex+dataMaxSize;
+			}
+			if(curVideoIndex==0)
+			{
+				vDeviceSource->erase(it);
+				return true;
+			}
+			else
+				return false;
+			
+		}
+		else
+		{
+			frameSize=0;
+			return false;
+		}
+	}
+	else
+		return false;
+	
+}
+
 std::string CdevSdk::CreateM3u8File()
 {
 	return m_pM3u8List.CreateM3u8File();
@@ -739,7 +892,7 @@ void CdevSdk::handleAudioAac(uint8_t* aacbuf,uint32_t bufsize,__int64 timeStamp,
 	//m_pM3u8List.handleAudio(aacbuf,bufsize,timeStamp);
 	//if(m_nType&0x01)
 	{
-		m_myRtmp.handleAudioAac(aacbuf+7,bufsize-7,timeStamp,nChannel,nSoundRate);
+	
 	}
 	
 	
@@ -747,12 +900,26 @@ void CdevSdk::handleAudioAac(uint8_t* aacbuf,uint32_t bufsize,__int64 timeStamp,
 }
 void CdevSdk::handleVideo(uint8_t* vidoebuf,uint32_t bufsize,__int64 TimeStamp,bool bkey)
 {
+	unsigned int getVideoFlag=0;
+	unsigned int i=0,size=0;
 	boost::asio::detail::mutex::scoped_lock lock(mutex_HandleVideo);
+	std::string temp((char *)vidoebuf,bufsize);
+	size=m_deviceSource.size();
+	for (i=0; i<size; i++)
+	{
+		//if(m_deviceSource[i]->size()<200)
+		{
+			m_deviceSource[i]->push_back(temp);
+			getVideoFlag=1;
+			//printf("this 0x%x,insert data size is %d   stask %d\n",this,temp.length(),m_deviceSource[i]->size());
+		}
+	}
+	if(getVideoFlag==0)
+		StopPlay();
 	//m_pM3u8List.handleVideo(vidoebuf,bufsize,TimeStamp,bkey);
 	//if(m_nType&0x01)
 	{
 		//printf("%d data \n",bufsize);
-		m_myRtmp.handleVideo(vidoebuf,bufsize,TimeStamp,bkey);
 	}
 }
 bool CdevSdk::Ps_AnalyzeDataGetPacketEx()

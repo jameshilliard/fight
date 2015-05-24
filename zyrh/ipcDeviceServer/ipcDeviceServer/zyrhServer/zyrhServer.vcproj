@@ -135,6 +135,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
+				OutputFile="$(OutDir)\wmp-plServer.exe"
 				LinkIncremental="1"
 				GenerateDebugInformation="true"
 				SubSystem="1"
@@ -216,6 +217,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\Release\crashrpt\875051bd-ab39-4c51-b667-0dac06e77c5c\crashdump.dmp"
+				>
+			</File>
+			<File
 				RelativePath=".\devsdk\DevManager.cpp"
 				>
 			</File>
@@ -237,14 +242,6 @@
 			</File>
 			<File
 				RelativePath=".\devsdk\H264Encoder.h"
-				>
-			</File>
-			<File
-				RelativePath=".\devsdk\H264FrameDeviceSource.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\devsdk\H264FrameDeviceSource.h"
 				>
 			</File>
 			<File
@@ -793,10 +790,6 @@
 					>
 				</File>
 			</Filter>
-		</Filter>
-		<Filter
-			Name="第三方头文件"
-			>
 		</Filter>
 		<Filter
 			Name="x264"

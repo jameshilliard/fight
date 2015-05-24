@@ -170,6 +170,9 @@ bool CHTTPClient::HttpPost(const std::string & strUrl,char* buf,int length,std::
 	sprintf(buftmp,"%s %s\r\n","User-Agent:","dwk");
 	strcat(sendbuf,buftmp);
 
+	sprintf(buftmp,"%s %s\r\n","Content-Type:","application/x-www-form-urlencoded");
+	strcat(sendbuf,buftmp);
+
 	sprintf(buftmp,"%s %s\r\n","Accept:","*/*");
 	strcat(sendbuf,buftmp);
 

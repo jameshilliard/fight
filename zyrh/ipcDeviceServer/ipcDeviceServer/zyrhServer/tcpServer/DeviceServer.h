@@ -13,7 +13,7 @@
 #ifndef _INCDeviceServer_h
 #define _INCDeviceServer_h
 #include <iostream>
-#include "../devsdk/H264FrameDeviceSource.h"
+#include "../devsdk/DevSdk.h"
 #include "../devsdk/SDKServerData.h"
 #include "./DeviceCommFuncs.h"
 
@@ -67,22 +67,22 @@ using Poco::Mutex;
 class DeviceServerConnection: public TCPServerConnection
 {
 public:
-	DeviceServerConnection(const StreamSocket& s,IpcDeviceParams *ipcDeviceParams,H264FrameDeviceSource * nH264FrameDeviceSource);
+	DeviceServerConnection(const StreamSocket& s,IpcDeviceParams *ipcDeviceParams,CdevSdk * nCdevSdk);
 	STATUS reloveOnePacket(StreamSocket  &connfd,char *recvbuff,UINT32 bufferSize,void *param);
 	void run();
 public:
 	IpcDeviceParams *m_IpcDeviceParams;
-	H264FrameDeviceSource * m_nH264FrameDeviceSource;
+	CdevSdk * m_nCdevSdk;
 };
 
 class DeviceServerConnectionFactory: public TCPServerConnectionFactory
 {
 public:
-	DeviceServerConnectionFactory(IpcDeviceParams * ipcDeviceParams,H264FrameDeviceSource * nH264FrameDeviceSource);
+	DeviceServerConnectionFactory(IpcDeviceParams * ipcDeviceParams,CdevSdk * nCdevSdk);
 	TCPServerConnection* createConnection(const StreamSocket& socket);
 public:
 	IpcDeviceParams *m_IpcDeviceParams;
-	H264FrameDeviceSource * m_nH264FrameDeviceSource;
+	CdevSdk * m_nCdevSdk;
 };
 
 class DeviceServer
@@ -109,7 +109,7 @@ public:
 	
 	bool					m_commServerStart;
 	bool					m_rtspServerStart;
-	H264FrameDeviceSource * m_nH264FrameDeviceSource;
+	CdevSdk * m_nCdevSdk;
 	IpcDeviceParams 	  *	m_ipcDeviceParams;
 	SDKServerData 			m_sdkServerData;
 	int 					m_commServerPort;

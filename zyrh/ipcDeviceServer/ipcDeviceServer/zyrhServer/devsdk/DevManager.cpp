@@ -2,6 +2,9 @@
 #include "DevSdk.h"
 #include <GlobalParam.h>
 #include <GlobalFun.h>
+#include "httpClient/httpClient.h"
+
+
 std::string GetDevIdkey(std::string sDevId,int nchannel);
 CDevManager::CDevManager()
 {
@@ -96,4 +99,17 @@ void CDevManager::CheckDevTimeOut()
 void CDevManager::StartCheckTimeOut()
 {
 	m_Thread.StartThread(boost::bind(&CDevManager::CheckDevTimeOut,this));
+}
+void CDevManager::StartUpateDeviceInfo()
+{
+	int i=0;
+	CHTTPClient sHttpClient;
+	std::string strUrl = "http://60.12.220.24:81/ws/zyrh.asmx/GetDevicePlatLinkageConfig";
+	std::string strRet;
+	sHttpClient.HttpPost(strUrl.c_str(),"strDevCodeList=",strlen("strDevCodeList="),strRet);
+	i++;
+}
+void CDevManager::UpateDeviceInfo()
+{
+	m_UpateDeviceInfoThread.StartThread(boost::bind(&CDevManager::StartUpateDeviceInfo,this));
 }
