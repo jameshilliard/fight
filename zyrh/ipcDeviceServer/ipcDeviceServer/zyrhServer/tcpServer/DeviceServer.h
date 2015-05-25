@@ -14,7 +14,6 @@
 #define _INCDeviceServer_h
 #include <iostream>
 #include "../devsdk/DevSdk.h"
-#include "../devsdk/SDKServerData.h"
 #include "./DeviceCommFuncs.h"
 
 
@@ -91,7 +90,7 @@ public:
 	DeviceServer();
 	DeviceServer(int port,int rtspPort,std::string userName,std::string secret);
 	~DeviceServer();
-	void setSdkServerData(SDKServerData sSDKserverData);
+	void setCdevSdkParam(CdevSdkParam sCdevSdkParam);
 	void start();
 	void stop();
 	
@@ -111,7 +110,7 @@ public:
 	bool					m_rtspServerStart;
 	CdevSdk * m_nCdevSdk;
 	IpcDeviceParams 	  *	m_ipcDeviceParams;
-	SDKServerData 			m_sdkServerData;
+	CdevSdkParam 			m_CdevSdkParam;
 	int 					m_commServerPort;
 	int 					m_rtspServerPort;
 	std::string 			m_userName;

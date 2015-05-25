@@ -171,18 +171,6 @@ void StartDeviceServer()
 		exit(0);
 		return ;
 	}
-	char buf[2048];
-	int i=1000; 
-
-	char FilePath[MAX_PATH+1]= {0};
-	char *p = NULL;
-
-	GetModuleFileNameA(NULL, FilePath, sizeof(FilePath)); //获取程序当前执行文件名
-	p=strrchr(FilePath, '\\');                       
-	*p='\0';
-	GetCurrentDirectoryA(1000,buf);   //得到当前工作路径 
-	std::string path = FilePath;
-	path += "/config.ini";
 
 	CGlobalClass::GetInstance()->GetDevManager()->StartUpateDeviceInfo();
 
@@ -194,26 +182,26 @@ void StartDeviceServer()
 	std::string str,str1,str2;
 	str = buf;
 
-	SDKServerData sSDKserverData;
+	CdevSdkParam sCdevSdkParam;
 	for (int i = 1;i<=5;i++)
 	{
 		strseparate((char*)str.c_str(),str1,str2,"_");
 		switch(i)
 		{
 		case 1:
-			sSDKserverData.m_sSdkServerIp = str1;
+			sCdevSdkParam.m_sSdkServerIp = str1;
 			break;
 		case 2:
-			sSDKserverData.m_nSdkServerPort = atoi(str1.c_str());
+			sCdevSdkParam.m_nSdkServerPort = atoi(str1.c_str());
 			break;
 		case 3:
-			sSDKserverData.m_nServerLine = atoi(str1.c_str());
+			sCdevSdkParam.m_nServerLine = atoi(str1.c_str());
 			break;
 		case 4:
-			sSDKserverData.m_sUserName = str1;
+			sCdevSdkParam.m_sUserName = str1;
 			break;
 		case 5:
-			sSDKserverData.m_spassword = str1;
+			sCdevSdkParam.m_spassword = str1;
 			break;
 		}
 		str = str2;
@@ -246,13 +234,13 @@ void StartDeviceServer()
 			switch(j)
 			{
 			case 1:
-				sSDKserverData.m_sDevId = str1;
+				sCdevSdkParam.m_sDevId = str1;
 				break;
 			case 2:
-				sSDKserverData.m_nDevLine = atoi(str1.c_str());
+				sCdevSdkParam.m_nDevLine = atoi(str1.c_str());
 				break;
 			case 3:
-				sSDKserverData.m_nnchannel = atoi(str1.c_str());
+				sCdevSdkParam.m_nnchannel = atoi(str1.c_str());
 				break;
 			case 4:
 				commServerPort = atoi(str1.c_str());
@@ -273,7 +261,7 @@ void StartDeviceServer()
 
 		}
 		DeviceServer *stDeviceServer = new DeviceServer(commServerPort,rtspServerPort,deviceUserName,deviceSecret);
-		stDeviceServer->setSdkServerData(sSDKserverData);
+		stDeviceServer->setCdevSdkParam(sCdevSdkParam);
 		stDeviceServer->start();
 		vcDeviceServer.push_back(stDeviceServer); 	
 		Sleep(100);

@@ -312,9 +312,9 @@ DeviceServer::~DeviceServer()
 
 }
 
-void DeviceServer::setSdkServerData(SDKServerData sSDKserverData)
+void DeviceServer::setCdevSdkParam(CdevSdkParam sCdevSdkParam)
 {
-	m_sdkServerData=sSDKserverData;
+	m_CdevSdkParam=sCdevSdkParam;
 }
 
 
@@ -350,8 +350,8 @@ void DeviceServer::runCommServerActivity()
 	m_ipcDeviceParams->m_rtspServerPort=m_rtspServerPort;
 	m_ipcDeviceParams->m_userName=m_userName;
 	m_ipcDeviceParams->m_secret=m_secret;
-	m_ipcDeviceParams->m_sDevId=m_sdkServerData.m_sDevId;
-	m_ipcDeviceParams->m_nnchannel=m_sdkServerData.m_nnchannel;
+	m_ipcDeviceParams->m_sDevId=m_CdevSdkParam.m_sDevId;
+	m_ipcDeviceParams->m_nnchannel=m_CdevSdkParam.m_nnchannel;
 	while(!m_nCdevSdk)
 	{
 		Thread::sleep(1000);
@@ -409,7 +409,7 @@ int DeviceServer::startRtspServer(int rtspServerPort)
 	free(databuf);//释放掉内存
 #endif
 
- 	m_nCdevSdk = new CdevSdk(m_sdkServerData);
+ 	m_nCdevSdk = new CdevSdk();
 	//上面的部分除了模拟网络传输的部分外其他的基本跟live555提供的demo一样，而下面则修改为网络传输的形式，为此重写addSubsession的第一个参数相关文件
 	char const* streamName = "ch1/main/av_stream";
 	ServerMediaSession* sms = ServerMediaSession::createNew(*env, streamName, streamName,descriptionString);

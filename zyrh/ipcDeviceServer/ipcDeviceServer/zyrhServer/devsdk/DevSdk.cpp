@@ -386,39 +386,11 @@ CdevSdk::CdevSdk()
 
 	m_nCheckDelTimeOut = 0;
 
-}
-CdevSdk::CdevSdk(SDKServerData nSdkServerData)
-{
-	m_nSkdPlayPort = -1;
-	m_h264Buf = new char[512*1024];
-	m_pffmpegEncoder = NULL;
-	m_pAacEncoder = NULL;
-	m_pG722 = NULL;
-	m_nAnalyzeHandle = -1;
-	m_nTimeNow = time(NULL);
-	boost::asio::io_service& _IoService = CGlobalClass::GetInstance()->GetIoservice()->get_io_service();
-	
-	m_io_timer_Ptr.reset(new boost::asio::deadline_timer(_IoService) );
-	m_pIoService = &_IoService;
-	
-	m_bStop = false;
-
-	m_nCheckDelTimeOut = 0;
-
-	//zss++
-	m_SdkServerData=nSdkServerData;
-	m_sServerIp = nSdkServerData.m_sSdkServerIp;
-	m_nServerPort = nSdkServerData.m_nSdkServerPort;
-	m_nServerLine = nSdkServerData.m_nServerLine;
-	m_spassword = nSdkServerData.m_spassword;
-	m_nDevLine = nSdkServerData.m_nDevLine;;
-	m_nnchannel = nSdkServerData.m_nnchannel;
-	m_sDevId = nSdkServerData.m_sDevId;
-	m_pM3u8List.m_sdveid = nSdkServerData.m_sDevId;
 	m_stream_handle=-1;
 	m_wmp_handle=-1;
-	//zss--
+
 }
+
 CdevSdk::~CdevSdk()
 {
 	delete[] m_h264Buf;
@@ -489,6 +461,40 @@ int CdevSdk::StartDev(char* sServerIp,unsigned int nServerPort,unsigned int nSer
 	return ret;
 }
 
+int CdevSdk::StartDev(CdevSdkParam cdevSdkParam)
+{
+	boost::asio::detail::mutex::scoped_lock lock(mutex_Lock);
+	m_sServerIp = cdevSdkParam.m_sSdkServerIp;
+	m_nServerPort = cdevSdkParam.m_nSdkServerPort;
+	m_nServerLine = cdevSdkParam.m_nServerLine;
+	m_spassword = cdevSdkParam.m_spassword;
+	m_nDevLine = cdevSdkParam.m_nDevLine;;
+	m_nnchannel = cdevSdkParam.m_nnchannel;
+	m_sDevId = cdevSdkParam.m_sDevId;
+	m_pM3u8List.m_sdveid = cdevSdkParam.m_sDevId;
+
+	m_wmp_handle = WMP_Create();
+	if (m_wmp_handle == -1)
+	{
+		return -1;
+	}
+	int ret =  WMP_Login(m_wmp_handle,(const char *)m_sServerIp.c_str(),m_nServerPort, (const char *)m_sDevId.c_str(),(const char *)m_spassword.c_str(),m_nServerLine);
+	if (ret == -1)
+	{
+		return -1;
+	}
+	ret = WMP_Play(m_wmp_handle,
+		(const char *)m_sDevId.c_str(),//devid:设备ID
+		m_nnchannel,//channel:设备通道号
+		WMP_STREAM_MAIN, //stream_type:WMP_STREAM_MAIN 1-主码流   WMP_STREAM_SUB 2-子码流 
+		WMP_TRANS_TCP,//trans_mode:WMP_TRANS_TCP/WMP_TRANS_UDP  #define WMP_TRANS_TCP	1#define WMP_TRANS_UDP	2
+		m_nDevLine,//dev_line:设备线路号
+		CBF_OnStreamPlay, (void*)m_nIndex,(int*)&m_stream_handle);
+	g_logger.TraceInfo("sdk取流 设备ID:%s 设备通道号:%d,设备线路号:%d,m_wmp_handle:%d,取流返回:%d ",m_sDevId.c_str(),m_nnchannel,m_nDevLine,m_wmp_handle,ret);
+	m_io_timer_Ptr->expires_from_now(boost::posix_time::seconds(5));
+	m_io_timer_Ptr->async_wait(boost::bind(&CdevSdk::OnTime,shared_from_this(),boost::asio::placeholders::error));
+	return ret;	
+}
 bool CdevSdk::StartDev()
 {
 	boost::asio::detail::mutex::scoped_lock lock(mutex_Lock);

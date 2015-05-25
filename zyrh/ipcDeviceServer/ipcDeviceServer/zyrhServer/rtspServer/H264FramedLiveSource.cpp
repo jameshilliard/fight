@@ -13,7 +13,7 @@ H264FramedLiveSource::H264FramedLiveSource(UsageEnvironment& env,CdevSdk *ptCdev
 
 H264FramedLiveSource* H264FramedLiveSource::createNew(UsageEnvironment& env, CdevSdk *ptCdevSdk, unsigned preferredFrameSize, unsigned playTimePerFrame)
 {
-	//static H264FramedLiveSource  newSource(env, nSdkServerData, preferredFrameSize, playTimePerFrame);
+	//static H264FramedLiveSource  newSource(env, nCdevSdkParam, preferredFrameSize, playTimePerFrame);
 	H264FramedLiveSource* newSource = new H264FramedLiveSource(env,ptCdevSdk, preferredFrameSize, playTimePerFrame);
 	newSource->setDeviceSource(ptCdevSdk);
 	return newSource;

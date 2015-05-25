@@ -249,10 +249,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\devsdk\SDKServerData.h"
-				>
-			</File>
-			<File
 				RelativePath=".\devsdk\wmpclient.h"
 				>
 			</File>
@@ -1219,6 +1215,46 @@
 				</File>
 				<File
 					RelativePath=".\tcpServer\encrypt\md5.h"
+					>
+				</File>
+			</Filter>
+		</Filter>
+		<Filter
+			Name="xml"
+			>
+			<File
+				RelativePath=".\xml\XMLMethod.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\xml\XMLMethod.h"
+				>
+			</File>
+			<Filter
+				Name="tinyxml"
+				>
+				<File
+					RelativePath=".\xml\tinyxml\tinystr.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\xml\tinyxml\tinystr.h"
+					>
+				</File>
+				<File
+					RelativePath=".\xml\tinyxml\tinyxml.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\xml\tinyxml\tinyxml.h"
+					>
+				</File>
+				<File
+					RelativePath=".\xml\tinyxml\tinyxmlerror.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\xml\tinyxml\tinyxmlparser.cpp"
 					>
 				</File>
 			</Filter>

@@ -8,7 +8,6 @@
 #include "ts/M3U8List.h"
 #include "g722/HCNetSDK.h"
 #include "g711/g711.h"
-#include "./SDKServerData.h"
 #include <boost/shared_ptr.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 #include <bas/io_service_pool.hpp>
@@ -18,13 +17,58 @@
 #include <boost/enable_shared_from_this.hpp>
 #include <boost/asio/detail/mutex.hpp>
 
+class CdevSdkParam
+{
+public:
+
+	CdevSdkParam()
+	{
+		m_sSdkServerIp="";
+		m_nSdkServerPort=0;
+		m_spassword="";
+		m_sUserName="";
+		m_nServerLine=0;
+
+		m_nDevLine=0;
+		m_nnchannel=0;
+		m_sDevId="";
+	}
+
+	CdevSdkParam(std::string sSdkServerIp,unsigned int nSdkServerPort,std::string sPassword,
+		std::string sUserName,unsigned int nServerLine,unsigned int nDevLine,
+		unsigned int nChannel,std::string sDevId)
+	{
+		m_sSdkServerIp=sSdkServerIp;
+		m_nSdkServerPort=nSdkServerPort;
+		m_spassword=sPassword;
+		m_sUserName=sUserName;
+		m_nServerLine=nServerLine;
+
+		m_nDevLine=nDevLine;
+		m_nnchannel=nChannel;
+		m_sDevId=sDevId;
+	};
+public:	
+	//sdk пео╒
+	std::string 	m_sSdkServerIp;
+	unsigned int 	m_nSdkServerPort;
+	std::string	 	m_spassword;
+	std::string 	m_sUserName;
+	unsigned int 	m_nServerLine;
+
+	unsigned int 	m_nDevLine;
+	unsigned int 	m_nnchannel;
+	std::string 	m_sDevId;
+
+};
+
 class  CdevSdk:public  boost::enable_shared_from_this<CdevSdk>
 {
 public:
 	CdevSdk();
-	CdevSdk(SDKServerData nSdkServerData);
 	~CdevSdk();
 	int StartDev(char* sServerIp,unsigned int nServerPort,unsigned int nServerLine,char* sdevId,char* password,unsigned int nDevLine,unsigned int nchannel,int nType);
+	int StartDev(CdevSdkParam cdevSdkParam);
 	void StopDev();
 	bool ReStartDev();
 	bool StartDev();
@@ -87,7 +131,7 @@ private:
 	CThread m_pThreadAudio;
 
 	//zss++
-	SDKServerData m_SdkServerData;
+	CdevSdkParam m_CdevSdkParam;
 	//zss--
 	void handleEncoder();
 	void handleEncoderAudio();

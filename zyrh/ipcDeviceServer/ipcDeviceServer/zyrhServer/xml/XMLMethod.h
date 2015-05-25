@@ -1,12 +1,16 @@
 #pragma once
 #include "tinyxml/tinyxml.h"
+#include <Map>
+#include <iostream>
+#include <atlstr.h>
+
+/using namespace std;
 
 // 包结构定义
 typedef struct S_Data
 {
 	int commandId;
 	CString commandName;
-	CString type;
 	map<CString,CString> params;
 	void CopyHead(S_Data *pData)
 	{
@@ -14,14 +18,12 @@ typedef struct S_Data
 			return;
 		commandId = pData->commandId;
 		commandName = pData->commandName;
-		type = pData->type;
 	}
 
 	void Clear()
 	{
 		commandId = 0;
 		commandName.Empty();
-		type.Empty();
 		params.clear();
 	}
 	void RemoveKey(CString sKey)

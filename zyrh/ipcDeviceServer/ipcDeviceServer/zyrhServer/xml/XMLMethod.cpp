@@ -1,6 +1,6 @@
 #include "StdAfx.h"
 #include "XMLMethod.h"
-
+#include <iostream>
 
 CXMLMethod::CXMLMethod(void)
 {
@@ -19,28 +19,23 @@ CXMLMethod *CXMLMethod::m_pXMLMethodObject = NULL;
 void CXMLMethod::Encode(S_Data *sData,CString &xml)
 {
 	TiXmlDocument doc; 
-	TiXmlDeclaration *decl = new TiXmlDeclaration("1.0","utf-8", ""); 
+	TiXmlDeclaration *decl = new TiXmlDeclaration("1.0","GB2312", ""); 
 	doc.LinkEndChild( decl );
 
-	TiXmlElement *lmtRoot = new TiXmlElement("command"); 
+	TiXmlElement *lmtRoot = new TiXmlElement("devicecmd"); 
 	doc.LinkEndChild(lmtRoot);
 
-	TiXmlElement *lmtId = new TiXmlElement("id");
+	TiXmlElement *lmtId = new TiXmlElement("cmdid");
 	lmtRoot->LinkEndChild(lmtId);
 	CString tmp;
 	tmp.Format("%d",sData->commandId);
 	TiXmlText *txtId = new TiXmlText(tmp);
 	lmtId->LinkEndChild(txtId);
 
-	TiXmlElement *lmtName = new TiXmlElement("name");
+	TiXmlElement *lmtName = new TiXmlElement("command");
 	lmtRoot->LinkEndChild(lmtName);
 	TiXmlText *txtName = new TiXmlText(sData->commandName);
 	lmtName->LinkEndChild(txtName);
-
-	TiXmlElement *lmtType = new TiXmlElement("type");
-	lmtRoot->LinkEndChild(lmtType);
-	TiXmlText *txtType = new TiXmlText(sData->type);
-	lmtType->LinkEndChild(txtType);
 
 	TiXmlElement *lmtParamRoot = new TiXmlElement("params");
 	lmtRoot->LinkEndChild(lmtParamRoot);
@@ -61,7 +56,6 @@ void CXMLMethod::Encode(S_Data *sData,CString &xml)
 		lmtValue->LinkEndChild(txtValue);
 	}
 	TiXmlPrinter printer;
-//	printer.SetStreamPrinting();
 	doc.Accept(&printer);
 
 	xml.Format("%s",printer.CStr());
@@ -70,11 +64,6 @@ void CXMLMethod::Encode(S_Data *sData,CString &xml)
 BOOL CXMLMethod::Decode(char *xml,S_Data *sData)
 {
 	TiXmlDocument doc;
-	//if(doc.Parse(xml)==0)
-	//{
-	//	//AfxMessageBox("捕获到异常了");
-	//	return;
-	//}
 	doc.Parse(xml);
 	doc.SaveFile("C:\\error.xml");
 	if ( doc.Error() )
@@ -82,7 +71,6 @@ BOOL CXMLMethod::Decode(char *xml,S_Data *sData)
 		doc.SaveFile("C:\\error.xml");
 		CString str;
 		str.Format("Error in %s: %s\n", doc.Value(), doc.ErrorDesc());
-		g_LookCmdLog.WriteLog(str);
 		return FALSE;
 	}
 	TiXmlElement *lmtRoot = doc.RootElement();
@@ -90,24 +78,17 @@ BOOL CXMLMethod::Decode(char *xml,S_Data *sData)
 		return FALSE;
 
 	
-	TiXmlElement *lmtId = lmtRoot->FirstChildElement("id");
+	TiXmlElement *lmtId = lmtRoot->FirstChildElement("cmdid");
 	if (lmtId)
 	{
 		const char *id = lmtId->GetText();
 		sData->commandId = atoi(id);
 
-		TiXmlElement *lmtName = lmtId->NextSiblingElement("name");
+		TiXmlElement *lmtName = lmtId->NextSiblingElement("command");
 		if (lmtName)
 		{
 			const char *name = lmtName->GetText();
 			sData->commandName.Format("%s",name);
-		}
-
-		TiXmlElement *lmtType = lmtName->NextSiblingElement("type");
-		if (lmtType)
-		{
-			const char *type = lmtType->GetText();
-			sData->type.Format("%s",type);
 		}
 
 		TiXmlElement *lmtParamRoot = lmtRoot->FirstChildElement("params");
@@ -182,7 +163,6 @@ BOOL CXMLMethod::BufToData(BYTE * bSendBuf,int nlen,S_Data *sData)
 		return FALSE;
 	if (!CheckXMLStr((char*) bSendBuf))
 	{
-		g_LookCmdLog.WriteLog("BufToData XML数据出错，不解码.内容：%s",(char *)bSendBuf);
 		return FALSE;
 	}
 	return Decode((char *)bSendBuf,sData);
