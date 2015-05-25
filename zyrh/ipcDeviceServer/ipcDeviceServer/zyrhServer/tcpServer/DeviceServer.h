@@ -12,12 +12,10 @@
 //
 #ifndef _INCDeviceServer_h
 #define _INCDeviceServer_h
+#define POCO_NO_UNWINDOWS
 #include <iostream>
-#include "../devsdk/DevSdk.h"
+#include "../devsdk/CdevSdkParam.h"
 #include "./DeviceCommFuncs.h"
-
-
-#define Poco_NO_UNWINDOWS
 
 #include "Poco/Net/TCPServer.h"
 #include "Poco/Net/TCPServerConnection.h"
@@ -25,44 +23,23 @@
 #include "Poco/Net/TCPServerParams.h"
 #include "Poco/Net/StreamSocket.h"
 #include "Poco/Net/ServerSocket.h"
-#include "Poco/Timestamp.h"
-#include "Poco/DateTimeFormatter.h"
-#include "Poco/DateTimeFormat.h"
-#include "Poco/Exception.h"
-#include "Poco/Util/ServerApplication.h"
-#include "Poco/Util/Option.h"
-#include "Poco/Util/OptionSet.h"
-#include "Poco/Util/HelpFormatter.h"
-#include "Poco/Activity.h"
-#include "Poco/Thread.h"
-#include "Poco/Mutex.h"
 
 using Poco::Timespan;
-using Poco::Thread;
 using Poco::Net::ServerSocket;
 using Poco::Net::StreamSocket;
 using Poco::Net::TCPServerConnection;
 using Poco::Net::TCPServerConnectionFactory;
 using Poco::Net::TCPServer;
-using Poco::Timestamp;
-using Poco::DateTimeFormatter;
-using Poco::DateTimeFormat;
-using Poco::Util::ServerApplication;
-using Poco::Util::Application;
-using Poco::Util::Option;
-using Poco::Util::OptionSet;
-using Poco::Util::HelpFormatter;
-using Poco::Mutex;
 
-
+#define Poco_NO_UNWINDOWS
 
 /*net client debug define*/
 #define NET_INFO(x)  printf x
 #define NET_ERR(x)   printf x
 #define NET_FATAL(x) printf x
 
-
-
+class CdevSdk;
+class CThread;
 class DeviceServerConnection: public TCPServerConnection
 {
 public:
@@ -84,36 +61,24 @@ public:
 	CdevSdk * m_nCdevSdk;
 };
 
+
 class DeviceServer
 {
 public:
 	DeviceServer();
-	DeviceServer(int port,int rtspPort,std::string userName,std::string secret);
 	~DeviceServer();
-	void setCdevSdkParam(CdevSdkParam sCdevSdkParam);
+	void setCdevSdkParam(CdevSdkParam sCdevSdkParam,CdevSdk *mCdevSdk);
 	void start();
 	void stop();
 	
 public:
 	void runCommServerActivity();
-	void runRtspServerActivity();
 	void StartCommServerThread();
-	void StartRtspServerThread();
 
 public:
-	int startRtspServer(int rtpServerPort);
-
-	CThread m_commServerThread;
-	CThread m_rtspServerThread;
-	
+	CThread					*m_commServerThread;
 	bool					m_commServerStart;
-	bool					m_rtspServerStart;
 	CdevSdk * m_nCdevSdk;
-	IpcDeviceParams 	  *	m_ipcDeviceParams;
-	CdevSdkParam 			m_CdevSdkParam;
-	int 					m_commServerPort;
-	int 					m_rtspServerPort;
-	std::string 			m_userName;
-	std::string 			m_secret;
+	IpcDeviceParams 	   *m_ipcDeviceParams;
 };
 #endif

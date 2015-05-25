@@ -7,6 +7,10 @@
 #include "DevManager.h"
 #include "AnalyzeDataInterface.h"
 
+#include "liveMedia.hh"
+#include "BasicUsageEnvironment.hh"
+#include "../rtspServer/H264LiveVideoServerMediaSubssion.hh"
+#include "../rtspServer/H264FramedLiveSource.hh"
 
 #define MYSYSTEM_MPEG2_PS   0x02	// PS封装
 
@@ -389,6 +393,9 @@ CdevSdk::CdevSdk()
 	m_stream_handle=-1;
 	m_wmp_handle=-1;
 
+	m_DeviceServer.setCdevSdkParam(m_CdevSdkParam,this);
+	m_rtspServerStart=true;
+	StartRtspServerThread();
 }
 
 CdevSdk::~CdevSdk()
@@ -399,7 +406,8 @@ CdevSdk::~CdevSdk()
 		m_io_timer_Ptr.reset();
 		 
 	}
-
+	stopRtspServerThread();
+	m_DeviceServer.stop();
 }
 void CdevSdk::OnTime(const boost::system::error_code& e)
 {
@@ -469,32 +477,16 @@ int CdevSdk::StartDev(CdevSdkParam cdevSdkParam)
 	m_nServerLine = cdevSdkParam.m_nServerLine;
 	m_spassword = cdevSdkParam.m_spassword;
 	m_nDevLine = cdevSdkParam.m_nDevLine;;
-	m_nnchannel = cdevSdkParam.m_nnchannel;
+	m_nnchannel = cdevSdkParam.m_CdevChannelDeviceParam.m_nChannelNo;
 	m_sDevId = cdevSdkParam.m_sDevId;
 	m_pM3u8List.m_sdveid = cdevSdkParam.m_sDevId;
 
-	m_wmp_handle = WMP_Create();
-	if (m_wmp_handle == -1)
-	{
-		return -1;
-	}
-	int ret =  WMP_Login(m_wmp_handle,(const char *)m_sServerIp.c_str(),m_nServerPort, (const char *)m_sDevId.c_str(),(const char *)m_spassword.c_str(),m_nServerLine);
-	if (ret == -1)
-	{
-		return -1;
-	}
-	ret = WMP_Play(m_wmp_handle,
-		(const char *)m_sDevId.c_str(),//devid:设备ID
-		m_nnchannel,//channel:设备通道号
-		WMP_STREAM_MAIN, //stream_type:WMP_STREAM_MAIN 1-主码流   WMP_STREAM_SUB 2-子码流 
-		WMP_TRANS_TCP,//trans_mode:WMP_TRANS_TCP/WMP_TRANS_UDP  #define WMP_TRANS_TCP	1#define WMP_TRANS_UDP	2
-		m_nDevLine,//dev_line:设备线路号
-		CBF_OnStreamPlay, (void*)m_nIndex,(int*)&m_stream_handle);
-	g_logger.TraceInfo("sdk取流 设备ID:%s 设备通道号:%d,设备线路号:%d,m_wmp_handle:%d,取流返回:%d ",m_sDevId.c_str(),m_nnchannel,m_nDevLine,m_wmp_handle,ret);
-	m_io_timer_Ptr->expires_from_now(boost::posix_time::seconds(5));
-	m_io_timer_Ptr->async_wait(boost::bind(&CdevSdk::OnTime,shared_from_this(),boost::asio::placeholders::error));
-	return ret;	
+	m_CdevSdkParam=cdevSdkParam;
+	m_DeviceServer.setCdevSdkParam(m_CdevSdkParam,this);
+	m_DeviceServer.start();
+	return 0;
 }
+
 bool CdevSdk::StartDev()
 {
 	boost::asio::detail::mutex::scoped_lock lock(mutex_Lock);
@@ -523,6 +515,8 @@ bool CdevSdk::StartDev()
 		m_nDevLine,//dev_line:设备线路号
 		CBF_OnStreamPlay, (void*)this,(int *)&m_stream_handle);
 	g_logger.TraceInfo("sdk重新取流 设备ID:%s 设备通道号:%d,设备线路号:%d,m_wmp_handle:%d,取流返回:%d ",m_sDevId.c_str(),m_nnchannel,m_nDevLine,m_wmp_handle,ret);
+	m_io_timer_Ptr->expires_from_now(boost::posix_time::seconds(5));
+	m_io_timer_Ptr->async_wait(boost::bind(&CdevSdk::OnTime,shared_from_this(),boost::asio::placeholders::error));
 	if (ret != 0)
 	{
 		return false;
@@ -553,6 +547,7 @@ bool CdevSdk::ReStartDev()
 		m_nDevLine,//dev_line:设备线路号
 		CBF_OnStreamPlay, (void*)m_nIndex,(int *)&m_stream_handle);
 	g_logger.TraceInfo("sdk重新取流 设备ID:%s 设备通道号:%d,设备线路号:%d,m_wmp_handle:%d,取流返回:%d ",m_sDevId.c_str(),m_nnchannel,m_nDevLine,m_wmp_handle,ret);
+
 	if (ret != 0)
 	{
 		return false;
@@ -1053,4 +1048,76 @@ bool CdevSdk::Ps_AnalyzeDataGetPacketEx()
 		}
 	}
 	return false;
+}
+
+void CdevSdk::StartRtspServerThread()
+{
+	m_rtspServerThread.StartThread(boost::bind(&CdevSdk::runRtspServerActivity,this));
+}
+void CdevSdk::stopRtspServerThread()
+{
+	m_rtspServerStart=false;
+	m_rtspServerThread.StopThread();
+}
+
+#define BUFSIZE 1024*1024*1
+
+void announceStream(RTSPServer* rtspServer, ServerMediaSession* sms,char const* streamName)//显示RTSP连接信息
+{
+	char* url = rtspServer->rtspURL(sms);
+	UsageEnvironment& env = rtspServer->envir();
+	g_logger.TraceInfo("Play this stream using the URL :%s",url);
+	delete[] url;
+}
+int CdevSdk::startRtspServer() 
+{
+	if(m_CdevSdkParam.m_CdevChannelDeviceParam.m_nRtspServerStartPort<0)
+		return -1;
+	//设置环境
+	UsageEnvironment* env;
+	OutPacketBuffer::maxSize = 1000000; // allow for some possibly large H.264 frames
+	Boolean reuseFirstSource = False;//如果为“true”则其他接入的客户端跟第一个客户端看到一样的视频流，否则其他客户端接入的时候将重新播放
+	TaskScheduler* scheduler = BasicTaskScheduler::createNew();
+	env = BasicUsageEnvironment::createNew(*scheduler);
+
+	//创建RTSP服务器
+	UserAuthenticationDatabase* authDB = NULL;
+	RTSPServer* rtspServer=NULL;
+	while(1)
+	{
+		rtspServer = RTSPServer::createNew(*env,m_CdevSdkParam.m_CdevChannelDeviceParam.m_nRtspServerStartPort, authDB);
+		if (rtspServer == NULL) {
+			g_logger.TraceInfo("Failed to create RTSP server: %s",env->getResultMsg());
+			m_CdevSdkParam.m_CdevChannelDeviceParam.m_nRtspServerStartPort++;
+		}
+		else
+			break;
+		Sleep(2000);
+	}
+	m_DeviceServer.setCdevSdkParam(m_CdevSdkParam,this);
+	char const* descriptionString= "Session streamed by \"testOnDemandRTSPServer\"";
+	//上面的部分除了模拟网络传输的部分外其他的基本跟live555提供的demo一样，而下面则修改为网络传输的形式，为此重写addSubsession的第一个参数相关文件
+	char const* streamName = "ch1/main/av_stream";
+	ServerMediaSession* sms = ServerMediaSession::createNew(*env, streamName, streamName,descriptionString);
+	sms->addSubsession(H264LiveVideoServerMediaSubssion::createNew(*env, reuseFirstSource,this));//修改为自己实现的H264LiveVideoServerMediaSubssion
+	rtspServer->addServerMediaSession(sms);
+	announceStream(rtspServer, sms, streamName);//提示用户输入连接信息
+	try
+	{		
+		env->taskScheduler().doEventLoop(); //循环等待连接
+	}
+	catch(...)
+	{
+		g_logger.TraceInfo("CException--\n");
+	}
+	return 0;
+}
+
+void CdevSdk::runRtspServerActivity()
+{
+	while(m_rtspServerStart)
+	{
+		startRtspServer();
+		Sleep(5000);
+	}
 }

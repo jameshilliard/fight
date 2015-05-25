@@ -2,9 +2,8 @@
 #define _INCnetCommandFuncs_h
 #include "./DeviceCommProtocol.h"
 #include "./netUtil.h"
-
+#include "Poco/Net/StreamSocket.h"
 using Poco::Net::StreamSocket;
-using Poco::FIFOBuffer;
 
 enum
 {

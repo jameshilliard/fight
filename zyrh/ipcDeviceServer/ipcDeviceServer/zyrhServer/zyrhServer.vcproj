@@ -217,7 +217,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\Release\crashrpt\875051bd-ab39-4c51-b667-0dac06e77c5c\crashdump.dmp"
+				RelativePath=".\devsdk\CdevSdkParam.h"
 				>
 			</File>
 			<File
@@ -1222,14 +1222,6 @@
 		<Filter
 			Name="xml"
 			>
-			<File
-				RelativePath=".\xml\XMLMethod.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\xml\XMLMethod.h"
-				>
-			</File>
 			<Filter
 				Name="tinyxml"
 				>

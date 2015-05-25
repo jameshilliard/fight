@@ -2,8 +2,9 @@
 #include "DevSdk.h"
 #include <GlobalParam.h>
 #include <GlobalFun.h>
-#include "xml/XMLMethod.h"
 #include "httpClient/httpClient.h"
+#include "xml/tinyxml/tinyxml.h"
+#include <Map>
 
 
 std::string GetDevIdkey(std::string sDevId,int nchannel);
@@ -35,6 +36,11 @@ CDevManager::CDevManager()
 	GetPrivateProfileString("ZyrhOpenService","StopStreamTimeOut","",buf,2048,m_configPath.c_str());
 	m_stopStreamTimeOut=atoi(buf);
 
+	memset(buf,0,sizeof(buf));
+	GetPrivateProfileString("ZyrhOpenService","RtspServerStartPort","",buf,2048,m_configPath.c_str());
+	m_nRtspServerStartPort=atoi(buf);
+
+	m_bDevManagerStart=true;
 }
 CDevManager::~CDevManager()
 {
@@ -56,6 +62,28 @@ int CDevManager::AddNewDev(std::string sDevID,unsigned int nDevLine,unsigned int
 	}
 	return 0;
 	
+}
+
+int CDevManager::AddNewDev(CdevSdkParam mCdevSdkParam)
+{
+	boost::asio::detail::mutex::scoped_lock lock(mutex_);
+	if (!GetDev(mCdevSdkParam.m_sDevId,mCdevSdkParam.m_nnchannel))
+	{
+		boost::shared_ptr<CdevSdk> devPtr(new CdevSdk);
+		m_nRtspServerStartPort++;
+		mCdevSdkParam.m_CdevChannelDeviceParam.m_nRtspServerStartPort=m_nRtspServerStartPort;
+		m_DevList.AddData(GetDevIdkey(mCdevSdkParam.m_sDevId,mCdevSdkParam.m_nnchannel),devPtr);
+		m_DevListIndex.AddData(devPtr->m_nIndex,devPtr);
+		return devPtr->StartDev(mCdevSdkParam);
+	}
+	else
+	{
+		boost::shared_ptr<CdevSdk> devPtr=GetDev(mCdevSdkParam.m_sDevId,mCdevSdkParam.m_nnchannel);	
+		if(!devPtr->m_CdevSdkParam.isEqual(mCdevSdkParam))
+			return devPtr->StartDev(mCdevSdkParam);
+	}
+	return 0;
+
 }
 boost::shared_ptr<CdevSdk> CDevManager::GetDev(std::string sDevID,int nChannel)
 {
@@ -127,76 +155,147 @@ void CDevManager::StartCheckTimeOut()
 	m_Thread.StartThread(boost::bind(&CDevManager::CheckDevTimeOut,this));
 }
 
-void CDevManager::decodeDeviceInfo(std::string deviceInfoString)
+BOOL CDevManager::decodeDeviceInfo(std::string deviceInfoString,CdevSdkParam &mCdevSdkParam)
 {
 	TiXmlDocument doc;
-	doc.Parse(deviceInfoString);
+	doc.Parse((const char *)deviceInfoString.c_str());
 	doc.SaveFile("C:\\error.xml");
 	if ( doc.Error() )
 	{
 		doc.SaveFile("C:\\error.xml");
-		CString str;
-		str.Format("Error in %s: %s\n", doc.Value(), doc.ErrorDesc());
 		return FALSE;
 	}
 	TiXmlElement *lmtRoot = doc.RootElement();
 	if(!lmtRoot)
 		return FALSE;
-
-
-	TiXmlElement *lmtId = lmtRoot->FirstChildElement("ArrayOfZyrhDeviceInfo");
-
-
-	if (lmtId)
+	TiXmlElement *curDeviceInfo = lmtRoot->FirstChildElement("ZyrhDeviceInfo");
+	while(curDeviceInfo)
 	{
+		TiXmlElement *devCodeElement=curDeviceInfo->FirstChildElement("DevCode");
+		if(devCodeElement)
+			mCdevSdkParam.m_sDevId=devCodeElement->FirstChild()->Value();
+
+		TiXmlElement *ChannelQuantityElement=curDeviceInfo->FirstChildElement("ChannelQuantity");
+		if(ChannelQuantityElement)
+			mCdevSdkParam.m_nChannelQuantity=atoi(ChannelQuantityElement->FirstChild()->Value());
+
+		TiXmlElement *ServerLineCodeElement=curDeviceInfo->FirstChildElement("ServerLineCode");
+		if(ServerLineCodeElement)
+			mCdevSdkParam.m_nDevLine=atoi(ServerLineCodeElement->FirstChild()->Value());
+
+		TiXmlElement *AudioTypeElement=curDeviceInfo->FirstChildElement("AudioType");
+		if(AudioTypeElement)
+			mCdevSdkParam.m_nAudioType=atoi(AudioTypeElement->FirstChild()->Value());
+
+		TiXmlElement *LimitedPreviewTimeElement=curDeviceInfo->FirstChildElement("LimitedPreviewTime");
+		if(LimitedPreviewTimeElement)
+			mCdevSdkParam.m_nLimitedPreviewTime=atoi(LimitedPreviewTimeElement->FirstChild()->Value());
 		
-		TiXmlElement *lmtParamRoot = lmtRoot->FirstChildElement("ZyrhDeviceInfo");
+		TiXmlElement *ChannelListElement=curDeviceInfo->FirstChildElement("ChannelList");
+		TiXmlElement *ChanneElement=NULL;
+		if(ChannelListElement)
+			ChanneElement=ChannelListElement->FirstChildElement("ZyrhChannelInfo");
 
-		if (lmtParamRoot)
+		while(ChanneElement)
 		{
-			CString sKey;
-			CString sVaule;
-			TiXmlElement *lmtTmp = lmtParamRoot->FirstChildElement();
-			while (lmtTmp)
-			{
-				TiXmlElement *lmtKey = lmtTmp->FirstChildElement("key");
-				if (lmtKey)
-				{
-					TiXmlElement *lmtValue = lmtKey->NextSiblingElement("value");
-					if (lmtValue)
-					{
-						sKey.Format("%s",lmtKey->GetText());
-						sVaule.Format("%s",lmtValue->GetText());
-						sVaule = sVaule=="(null)"?"":sVaule;
-						sData->params[sKey] = sVaule;
-					}
-				}
+			TiXmlElement *ChannelNoElement=ChanneElement->FirstChildElement("ChannelNo");
+			if(ChannelNoElement)
+				mCdevSdkParam.m_CdevChannelDeviceParam.m_nChannelNo=atoi(ChannelNoElement->FirstChild()->Value());
 
-				lmtTmp = lmtTmp->NextSiblingElement();
+			TiXmlElement *ConnectTypeElement=ChanneElement->FirstChildElement("ConnectType");
+			if(ConnectTypeElement)
+				mCdevSdkParam.m_CdevChannelDeviceParam.m_nConnectType=atoi(ConnectTypeElement->FirstChild()->Value());
+
+			TiXmlElement *ChannelNameElement=ChanneElement->FirstChildElement("ChannelName");
+			if(ConnectTypeElement)
+				mCdevSdkParam.m_CdevChannelDeviceParam.m_sChannelName=ChannelNameElement->FirstChild()->Value();
+			
+			TiXmlElement *StreamTypeElement=ChanneElement->FirstChildElement("StreamType");
+			if(StreamTypeElement)
+				mCdevSdkParam.m_CdevChannelDeviceParam.m_nStreamType=atoi(StreamTypeElement->FirstChild()->Value());
+
+			TiXmlElement *PlatLinkagElement=ChanneElement->FirstChildElement("PlatLinkag");
+			if(PlatLinkagElement)
+			{
+				TiXmlElement *PlatDevNameElement=PlatLinkagElement->FirstChildElement("PlatDevName");
+				if(PlatDevNameElement)
+					mCdevSdkParam.m_CdevChannelDeviceParam.m_sPlatDevName=PlatDevNameElement->FirstChild()->Value();
+
+				TiXmlElement *PlatDevPwdElement=PlatLinkagElement->FirstChildElement("PlatDevPwd");
+				if(PlatDevPwdElement)
+					mCdevSdkParam.m_CdevChannelDeviceParam.m_sPlatDevPwd=PlatDevPwdElement->FirstChild()->Value();
+
+				TiXmlElement *PlatDevPortElement=PlatLinkagElement->FirstChildElement("PlatDevPort");
+				if(PlatDevPortElement)
+					mCdevSdkParam.m_CdevChannelDeviceParam.m_nPlatDevPort=atoi(PlatDevPortElement->FirstChild()->Value());
 			}
+			AddNewDev(mCdevSdkParam);
+			Sleep(100);
+			ChanneElement=ChanneElement->NextSiblingElement();
 		}
+		curDeviceInfo=curDeviceInfo->NextSiblingElement();
 	}
+
 	return TRUE;
 	
 }
 
 void CDevManager::StartUpateDeviceInfo()
 {
+
+	char buf[2048]={0};
 	CHTTPClient sHttpClient;
-	while(1)
+	GetPrivateProfileString("ZyrhOpenService","Sdkclient","",buf,2048,m_configPath.c_str());
+	std::string str,str1,str2;
+	str = buf;
+
+	CdevSdkParam sCdevSdkParam;
+	for (int i = 1;i<=5;i++)
+	{
+		strseparate((char*)str.c_str(),str1,str2,"_");
+		switch(i)
+		{
+		case 1:
+			sCdevSdkParam.m_sSdkServerIp = str1;
+			break;
+		case 2:
+			sCdevSdkParam.m_nSdkServerPort = atoi(str1.c_str());
+			break;
+		case 3:
+			sCdevSdkParam.m_nServerLine = atoi(str1.c_str());
+			break;
+		case 4:
+			sCdevSdkParam.m_sUserName = str1;
+			break;
+		case 5:
+			sCdevSdkParam.m_spassword = str1;
+			break;
+		}
+		str = str2;
+	}
+	sCdevSdkParam.m_CdevChannelDeviceParam.m_nRtspServerStartPort=m_nRtspServerStartPort;
+	
+	while(m_bDevManagerStart)
 	{
 		std::string strRet="";
 		sHttpClient.HttpPost(m_DeviceInfoHttpAddr,"strDevCodeList=",strlen("strDevCodeList="),strRet);
 		if(!strRet.empty())
 		{
-			decodeDeviceInfo(strRet);	
+			decodeDeviceInfo(strRet,sCdevSdkParam);	
+			Sleep(60000);
 		}
-		Sleep(1000);
+		else
+		{
+			g_logger.TraceInfo("read %s",m_DeviceInfoHttpAddr.c_str());
+			Sleep(1000);
+		}
+		
 	}
 	
 
 }
 void CDevManager::UpateDeviceInfo()
 {
-	m_UpateDeviceInfoThread.StartThread(boost::bind(&CDevManager::StartUpateDeviceInfo,this));
+	m_bDevManagerStart=true;
+	m_UpateDeviceInfoThread.StartThread(boost::bind(&CDevManager::StartUpateDeviceInfo,this));	
 }

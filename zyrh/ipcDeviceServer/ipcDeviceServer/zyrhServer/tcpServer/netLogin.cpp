@@ -15,7 +15,6 @@
 #include "encrypt/cryptomisc.h"
 
 
-
 #define NETPRT(x)   printf x
 
 #define CHECK_CLIENT_IP			/* check peer's client IP address */

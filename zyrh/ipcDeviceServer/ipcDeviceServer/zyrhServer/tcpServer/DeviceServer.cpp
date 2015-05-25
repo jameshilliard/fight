@@ -11,27 +11,14 @@
 // SPDX-License-Identifier:	BSL-1.0
 //
 #include "DeviceServer.h"
-#include "liveMedia.hh"
-#include "BasicUsageEnvironment.hh"
-#include "../rtspServer/H264LiveVideoServerMediaSubssion.hh"
-#include "../rtspServer/H264FramedLiveSource.hh"
-
-
-#define BUFSIZE 1024*1024*1
-
-void announceStream(RTSPServer* rtspServer, ServerMediaSession* sms,char const* streamName)//显示RTSP连接信息
-{
-	char* url = rtspServer->rtspURL(sms);
-	UsageEnvironment& env = rtspServer->envir();
-	env << "Play this stream using the URL \"" << url << "\"\n";
-	delete[] url;
-}
+#include "devsdk/DevSdk.h"
 
 DeviceServerConnection::DeviceServerConnection(const StreamSocket& s,IpcDeviceParams *ipcDeviceParams,CdevSdk * nCdevSdk): 
 	TCPServerConnection(s)
 {
 	m_IpcDeviceParams=ipcDeviceParams;
 	m_nCdevSdk=nCdevSdk;
+
 }
 
 int concovtPtzData(NET_PTZ_CTRL_DATA netPTZCtrlData,ptzControl *mptzControl)
@@ -281,7 +268,7 @@ void DeviceServerConnection::run()
 			socket().shutdown();
 			break;
 		}
-		Thread::sleep(100);
+		Sleep(100);
 	}
 }
 	
@@ -296,146 +283,65 @@ TCPServerConnection* DeviceServerConnectionFactory::createConnection(const Strea
 	return new DeviceServerConnection(socket,m_IpcDeviceParams,m_nCdevSdk);
 }
 
-DeviceServer::DeviceServer(int port,int rtspPort,std::string userName,std::string secret)
+DeviceServer::DeviceServer()
 {
-	m_commServerPort=port;
-	m_rtspServerPort=rtspPort;
-	m_userName=userName;
-	m_secret=secret;
-	m_commServerStart=false;
-	m_rtspServerStart=false;
-	m_nCdevSdk=NULL;
+	m_ipcDeviceParams=new IpcDeviceParams();
+	m_commServerThread = new CThread();
 }
 
 DeviceServer::~DeviceServer()
 {
-
+	free(m_ipcDeviceParams);
+	free(m_commServerThread);
 }
 
-void DeviceServer::setCdevSdkParam(CdevSdkParam sCdevSdkParam)
+void DeviceServer::setCdevSdkParam(CdevSdkParam sCdevSdkParam,CdevSdk *mCdevSdk)
 {
-	m_CdevSdkParam=sCdevSdkParam;
-}
+	m_nCdevSdk=mCdevSdk;
+	m_ipcDeviceParams->m_commServerPort=sCdevSdkParam.m_CdevChannelDeviceParam.m_nPlatDevPort;
+	m_ipcDeviceParams->m_rtspServerPort=sCdevSdkParam.m_CdevChannelDeviceParam.m_nRtspServerStartPort;
+	m_ipcDeviceParams->m_userName=sCdevSdkParam.m_CdevChannelDeviceParam.m_sPlatDevName;
+	m_ipcDeviceParams->m_secret=sCdevSdkParam.m_CdevChannelDeviceParam.m_sPlatDevPwd;
+	m_ipcDeviceParams->m_sDevId=sCdevSdkParam.m_sDevId;
+	m_ipcDeviceParams->m_nnchannel=sCdevSdkParam.m_nnchannel;
 
+}
 
 void DeviceServer::start()
 {
 	m_commServerStart=true;
-	m_rtspServerStart=true;
 	StartCommServerThread();
-	StartRtspServerThread();
 }
 
 void DeviceServer::stop()
 {
 	m_commServerStart=false;
-	m_rtspServerStart=false;
-	m_commServerThread.StopThread();
-	m_rtspServerThread.StopThread();
+	m_commServerThread->StopThread();
 }
 
 void DeviceServer::StartCommServerThread()
 {
-	m_commServerThread.StartThread(boost::bind(&DeviceServer::runCommServerActivity,this));
+	m_commServerThread->StartThread(boost::bind(&DeviceServer::runCommServerActivity,this));
 }
-void DeviceServer::StartRtspServerThread()
-{
-	m_rtspServerThread.StartThread(boost::bind(&DeviceServer::runRtspServerActivity,this));
-}
+
 void DeviceServer::runCommServerActivity()
 {
-	std::cout << "commServer start." <<m_commServerPort<< std::endl;
-	m_ipcDeviceParams=new IpcDeviceParams();
-	m_ipcDeviceParams->m_commServerPort=m_commServerPort;
-	m_ipcDeviceParams->m_rtspServerPort=m_rtspServerPort;
-	m_ipcDeviceParams->m_userName=m_userName;
-	m_ipcDeviceParams->m_secret=m_secret;
-	m_ipcDeviceParams->m_sDevId=m_CdevSdkParam.m_sDevId;
-	m_ipcDeviceParams->m_nnchannel=m_CdevSdkParam.m_nnchannel;
-	while(!m_nCdevSdk)
-	{
-		Thread::sleep(1000);
-	}
+	g_logger.TraceInfo("commServer start:%d",m_ipcDeviceParams->m_commServerPort);
+
 	DeviceServerConnectionFactory *ptrDeviceServerConnectionFactory=new DeviceServerConnectionFactory(m_ipcDeviceParams,m_nCdevSdk);
-	TCPServer srv(ptrDeviceServerConnectionFactory,m_commServerPort);
+	TCPServer srv(ptrDeviceServerConnectionFactory,m_ipcDeviceParams->m_commServerPort);
 	srv.start();
-	
 	while(m_commServerStart)
 	{
 		//printf("commServer %d running. totalConnections：%d refuse :%d\n",m_commServerPort,srv.totalConnections(),srv.refusedConnections());
 		//printf("commServer %d running. maxConcurrentConnections：%d currentConnections :%d\n",m_commServerPort,srv.maxConcurrentConnections(),srv.currentConnections());
 		//printf("commServer %d running. queuedConnections：%d\n",m_commServerPort,srv.queuedConnections());
-		Thread::sleep(5000);
+		Sleep(1000);
 	}
 	srv.stop();
-	std::cout << "commServer stopped." << std::endl;
 }
 
 
-int DeviceServer::startRtspServer(int rtspServerPort) 
-{
-	if(m_rtspServerPort<0)
-		return -1;
-	//设置环境
-	UsageEnvironment* env;
-	OutPacketBuffer::maxSize = 1000000; // allow for some possibly large H.264 frames
-	Boolean reuseFirstSource = False;//如果为“true”则其他接入的客户端跟第一个客户端看到一样的视频流，否则其他客户端接入的时候将重新播放
-	TaskScheduler* scheduler = BasicTaskScheduler::createNew();
-	env = BasicUsageEnvironment::createNew(*scheduler);
 
-	//创建RTSP服务器
-	UserAuthenticationDatabase* authDB = NULL;
-	RTSPServer* rtspServer = RTSPServer::createNew(*env, m_rtspServerPort, authDB);
-	if (rtspServer == NULL) {
-		*env << "Failed to create RTSP server: " << env->getResultMsg() << "\n";
-		exit(1);
-	}
-	char const* descriptionString= "Session streamed by \"testOnDemandRTSPServer\"";
-
-#if 0
-	//模拟实时流发送相关变量
-	int datasize;//数据区长度
-	unsigned char*  databuf;//数据区指针
-	databuf = (unsigned char*)malloc(BUFSIZE);
-	bool dosent;//rtsp发送标志位，为true则发送，否则退出
-	//从文件中拷贝1M数据到内存中作为实时网络传输内存模拟，如果实时网络传输应该是双线程结构，记得在这里加上线程锁
-	//此外实时传输的数据拷贝应该是发生在H264FramedLiveSource文件中，所以这里只是自上往下的传指针过去给它
-	FILE *pf;
-	fopen_s(&pf, "./test.264", "rb");
-	fread(databuf, 1, BUFSIZE, pf);
-	datasize = BUFSIZE;
-	dosent = true;
-	fclose(pf);
-	free(databuf);//释放掉内存
-#endif
-
- 	m_nCdevSdk = new CdevSdk();
-	//上面的部分除了模拟网络传输的部分外其他的基本跟live555提供的demo一样，而下面则修改为网络传输的形式，为此重写addSubsession的第一个参数相关文件
-	char const* streamName = "ch1/main/av_stream";
-	ServerMediaSession* sms = ServerMediaSession::createNew(*env, streamName, streamName,descriptionString);
-	sms->addSubsession(H264LiveVideoServerMediaSubssion::createNew(*env, reuseFirstSource,m_nCdevSdk));//修改为自己实现的H264LiveVideoServerMediaSubssion
-	rtspServer->addServerMediaSession(sms);
-	announceStream(rtspServer, sms, streamName);//提示用户输入连接信息
-	try
-	{		
-		env->taskScheduler().doEventLoop(); //循环等待连接
-	}
-	catch(...)
-	{
-		printf("CException--\n");
-	}
-	return 0;
-}
-
-void DeviceServer::runRtspServerActivity()
-{
-	std::cout << "rtspServer start."<<m_rtspServerPort<< std::endl;
-	while(m_rtspServerStart)
-	{
-		startRtspServer(m_rtspServerPort);
-		Thread::sleep(5000);
-	}
-	std::cout << "rtspServer stopped."<<m_rtspServerPort << std::endl;
-}
 
 

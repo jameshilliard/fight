@@ -2,9 +2,8 @@
 #include "tinyxml/tinyxml.h"
 #include <Map>
 #include <iostream>
-#include <atlstr.h>
 
-/using namespace std;
+using namespace std;
 
 // 包结构定义
 typedef struct S_Data

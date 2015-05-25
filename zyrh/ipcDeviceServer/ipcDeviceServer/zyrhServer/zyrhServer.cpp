@@ -19,7 +19,6 @@
 #include "devsdk/wmpclient.h"
 #include "./GlobalHttpFun.h"
 #include <GlobalParam.h>
-#include "tcpServer/DeviceServer.h"
 #include <GlobalClass.h>
 #include "devsdk/DevManager.h"
 

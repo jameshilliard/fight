@@ -1,9 +1,10 @@
 #ifndef _INCnetCommandNetLogin_h
 #define _INCnetCommandNetLogin_h
-
 #include "./DeviceCommProtocol.h"
 #include "./netUtil.h"
 
+#include "Poco/Net/StreamSocket.h"
+using Poco::Net::StreamSocket;
 
 #define 	SerialNo			"ZY20141120CCCH490402389"
 #define 	DevType				0	

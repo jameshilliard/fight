@@ -10,9 +10,7 @@ CFFmpegEncoder::CFFmpegEncoder(uint32_t nWidth,uint32_t nHegint,uint32_t nFrameR
 	m_nWidth = nWidth;
 	m_nHegint = nHegint;
 	m_nFrameRate = nFrameRate;
-	InitEncoder();
-	
-	
+	InitEncoder();	
 }
 CFFmpegEncoder::~CFFmpegEncoder()
 {

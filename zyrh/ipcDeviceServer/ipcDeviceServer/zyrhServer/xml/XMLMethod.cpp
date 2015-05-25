@@ -114,6 +114,7 @@ BOOL CXMLMethod::Decode(char *xml,S_Data *sData)
 
 				lmtTmp = lmtTmp->NextSiblingElement();
 			}
+
 		}
 	}
 	return TRUE;

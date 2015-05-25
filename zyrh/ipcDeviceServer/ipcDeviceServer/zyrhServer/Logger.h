@@ -11,7 +11,7 @@ static const char * ERRORPREFIX = " Error: \n";
 static const char * WARNINGPREFIX   = " Warning: \n";
 static const char * INFOPREFIX      = " Info: ";
 
-static const int MAX_STR_LEN = 1024;
+static const int MAX_STR_LEN = 10*1024;
 //日志级别枚举
 typedef enum EnumLogLevel
 {

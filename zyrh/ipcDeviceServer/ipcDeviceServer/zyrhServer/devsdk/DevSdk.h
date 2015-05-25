@@ -16,51 +16,9 @@
 #include <boost/bind.hpp>
 #include <boost/enable_shared_from_this.hpp>
 #include <boost/asio/detail/mutex.hpp>
+#include "./CdevSdkParam.h"
+#include "../tcpServer/DeviceServer.h"
 
-class CdevSdkParam
-{
-public:
-
-	CdevSdkParam()
-	{
-		m_sSdkServerIp="";
-		m_nSdkServerPort=0;
-		m_spassword="";
-		m_sUserName="";
-		m_nServerLine=0;
-
-		m_nDevLine=0;
-		m_nnchannel=0;
-		m_sDevId="";
-	}
-
-	CdevSdkParam(std::string sSdkServerIp,unsigned int nSdkServerPort,std::string sPassword,
-		std::string sUserName,unsigned int nServerLine,unsigned int nDevLine,
-		unsigned int nChannel,std::string sDevId)
-	{
-		m_sSdkServerIp=sSdkServerIp;
-		m_nSdkServerPort=nSdkServerPort;
-		m_spassword=sPassword;
-		m_sUserName=sUserName;
-		m_nServerLine=nServerLine;
-
-		m_nDevLine=nDevLine;
-		m_nnchannel=nChannel;
-		m_sDevId=sDevId;
-	};
-public:	
-	//sdk пео╒
-	std::string 	m_sSdkServerIp;
-	unsigned int 	m_nSdkServerPort;
-	std::string	 	m_spassword;
-	std::string 	m_sUserName;
-	unsigned int 	m_nServerLine;
-
-	unsigned int 	m_nDevLine;
-	unsigned int 	m_nnchannel;
-	std::string 	m_sDevId;
-
-};
 
 class  CdevSdk:public  boost::enable_shared_from_this<CdevSdk>
 {
@@ -87,6 +45,10 @@ public:
 	bool GetVideoData(std::vector<std::string > *vDeviceSource,unsigned char *ptData,unsigned int &frameSize,unsigned int dataMaxSize,unsigned int &curVideoIndex);
 	bool addDeviceSource(std::vector<std::string > *vDeviceSource);
 	bool removeDeviceSource(std::vector<std::string > *vDeviceSource);
+	void CdevSdk::runRtspServerActivity();
+	int  CdevSdk::startRtspServer();
+	void CdevSdk::stopRtspServerThread();
+	void CdevSdk::StartRtspServerThread();
 	//zss--
 private:
 	void ResetParam();
@@ -130,9 +92,6 @@ private:
 	CThread m_pThread;
 	CThread m_pThreadAudio;
 
-	//zss++
-	CdevSdkParam m_CdevSdkParam;
-	//zss--
 	void handleEncoder();
 	void handleEncoderAudio();
 public:
@@ -154,4 +113,11 @@ public:
 	std::string m_srtmpurl;
 	bool m_bStop;
 	int m_nCheckDelTimeOut;
+
+	//zss++
+	CThread m_rtspServerThread;
+	bool	m_rtspServerStart;
+	CdevSdkParam m_CdevSdkParam;
+	DeviceServer m_DeviceServer;
+	//zss--
 };
