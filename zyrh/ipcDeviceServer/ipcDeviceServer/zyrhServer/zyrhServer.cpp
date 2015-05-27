@@ -22,92 +22,6 @@
 #include <GlobalClass.h>
 #include "devsdk/DevManager.h"
 
-#if 0
-#include <bas/server.hpp>
-#include <bas/service_handler.hpp>
-#include <boost/thread.hpp>
-#include <server_work_allocator.hpp>
-#include "server/http_server_work_allocator.hpp"
-typedef bas::server<server_work, server_work_allocator> server;
-typedef bas::service_handler_pool<server_work, server_work_allocator> service_handler_pool_type;
-
-void StartServer()
-{
-	char buf[256];
-	
-	GetModuleFileNameA(NULL, buf, MAX_PATH);
-	(_tcsrchr(buf,'\\'))[1] = 0;
-	SetCurrentDirectoryA(buf);
-	if(!initCrash())
-	{
-		g_logger.TraceInfo("initCrash false,程序将退出");
-		Sleep(10*1000);
-		exit(1);
-	}
-	WMP_Init();
-	std::string path = buf;
-	path += "config.ini";
-
-	GetPrivateProfileString("zyrhRtmpServer","httpDir","",buf,2048,path.c_str());
-	CGlobalParam::GetInstance()->m_HttpWorkDir = buf;
-
-	unsigned int port = GetPrivateProfileInt("zyrhRtmpServer","httpPort",0,path.c_str());
-
-	GetPrivateProfileString("zyrhRtmpServer","sdkServerIp","",buf,2048,path.c_str());
-	CGlobalParam::GetInstance()->m_SdkServerIp = buf;
-
-
-	CGlobalParam::GetInstance()->m_nSdkServerPort = GetPrivateProfileInt("zyrhRtmpServer","sdkServerPort",0,path.c_str());
-	CGlobalParam::GetInstance()->m_nSdkServerLine = GetPrivateProfileInt("zyrhRtmpServer","sdkServerLine",0,path.c_str());
-
-
-	GetPrivateProfileString("zyrhRtmpServer","rtmpServerIp","",buf,2048,path.c_str());
-	CGlobalParam::GetInstance()->m_RtmpServerIp = buf;
-
-	CGlobalParam::GetInstance()->m_nRtmpkServerPort = GetPrivateProfileInt("zyrhRtmpServer","rtmpServerPort",0,path.c_str());
-
-	CGlobalParam::GetInstance()->m_bStopStream = GetPrivateProfileInt("zyrhRtmpServer","ServerStopStreamType",0,path.c_str());
-
-	CGlobalParam::GetInstance()->m_bStopStreamTimeOut = GetPrivateProfileInt("zyrhRtmpServer","StopStreamTimeOut",0,path.c_str());
-
-	std::size_t io_pool_size = 4;
-	std::size_t work_pool_init_size =  8;
-	std::size_t work_pool_high_watermark = 32;
-	std::size_t work_pool_thread_load = 5000;
-	std::size_t accept_queue_length =  1000;
-	std::size_t preallocated_handler_number = 1000;
-	std::size_t read_buffer_size = 10000;
-	unsigned int session_timeout = 0;
-	unsigned int io_timeout = 60;
-
-	boost::shared_ptr<server> httpServer(new server(new service_handler_pool_type((server_work_allocator*)new http_server_work_allocator(),
-		preallocated_handler_number,
-		read_buffer_size,
-		0,
-		session_timeout,
-		io_timeout),
-		"0.0.0.0",
-		port,
-		io_pool_size,
-		work_pool_init_size,
-		work_pool_high_watermark,
-		work_pool_thread_load,
-		accept_queue_length)) ;
-	g_logger.TraceInfo("开启http服务器:%d http目录:%s",port,CGlobalParam::GetInstance()->m_HttpWorkDir.c_str());
-
-	g_logger.TraceInfo("sdk取流ip:%s 端口:%d,线路号:%d",
-		CGlobalParam::GetInstance()->m_SdkServerIp.c_str(),
-		CGlobalParam::GetInstance()->m_nSdkServerPort,
-		CGlobalParam::GetInstance()->m_nSdkServerLine);
-
-	// 		g_logger.TraceInfo("rtmpIp:%s 端口:%d",
-	// 			CGlobalParam::GetInstance()->m_RtmpServerIp.c_str(),
-	// 			CGlobalParam::GetInstance()->m_nRtmpkServerPort);
-	httpServer->run();
-}
-boost::shared_ptr<server> httpServer;
-#endif
-
 //定义全局函数变量
 void Init();
 BOOL IsInstalled();
@@ -116,11 +30,14 @@ BOOL Uninstall();
 void LogEvent(LPCSTR pszFormat, ...);
 void WINAPI ServiceMain();
 void WINAPI ServiceStrl(DWORD dwOpcode);
-CHAR szServiceName[] = ("wmp-pl");
+CHAR szServiceName[] = ("wmp-plServer");
 BOOL bInstall;
 SERVICE_STATUS_HANDLE hServiceStatus;
 SERVICE_STATUS status;
 DWORD dwThreadID;
+
+#define SLEEP_TIME 5000
+#define LOGFILE "G:\\memstatus.txt"
 
 
 //*********************************************************
@@ -162,6 +79,11 @@ void StartDeviceServer()
 	//xhkj
 	std::string spagip;
 	int npagPort;
+	char buf[256];
+
+	GetModuleFileNameA(NULL, buf, MAX_PATH);
+	(_tcsrchr(buf,'\\'))[1] = 0;
+	SetCurrentDirectory(buf);
 
 	if(!initCrash())
 	{
@@ -170,113 +92,14 @@ void StartDeviceServer()
 		exit(0);
 		return ;
 	}
-
 	CGlobalClass::GetInstance()->GetDevManager()->StartUpateDeviceInfo();
-
-	#if 0
-	GetPrivateProfileString("ZyrhOpenService","httpurl","",buf,2048,path.c_str());
-	sHttpUrl = buf;
-
-	GetPrivateProfileString("client","Sdkclient","",buf,2048,path.c_str());
-	std::string str,str1,str2;
-	str = buf;
-
-	CdevSdkParam sCdevSdkParam;
-	for (int i = 1;i<=5;i++)
-	{
-		strseparate((char*)str.c_str(),str1,str2,"_");
-		switch(i)
-		{
-		case 1:
-			sCdevSdkParam.m_sSdkServerIp = str1;
-			break;
-		case 2:
-			sCdevSdkParam.m_nSdkServerPort = atoi(str1.c_str());
-			break;
-		case 3:
-			sCdevSdkParam.m_nServerLine = atoi(str1.c_str());
-			break;
-		case 4:
-			sCdevSdkParam.m_sUserName = str1;
-			break;
-		case 5:
-			sCdevSdkParam.m_spassword = str1;
-			break;
-		}
-		str = str2;
-	}
-
-	GetPrivateProfileString("Gateway","Setpag","",buf,2048,path.c_str());
-	str = buf;
-
-	strseparate((char*)str.c_str(),str1,str2,"_");
-	spagip = str1;
-	npagPort = atoi(str2.c_str());
-
-	unsigned int DevCount = GetPrivateProfileInt("Dev","Devcount",0,path.c_str());
-	vector<DeviceServer *> 	vcDeviceServer;
-	int 					commServerPort;
-	int 					rtspServerPort;
-	std::string 			deviceUserName;
-	std::string 			deviceSecret;
-	for (int i = 0;i<DevCount;i++)
-	{
-		//#设备ID=原设备ID_原设备取流线路_原设备通道数_新设备ID_域
-		char sBufDevId[1024];
-		sprintf(sBufDevId,"DevId_%d",i+1);
-		GetPrivateProfileString("Dev",sBufDevId,"",buf,2048,path.c_str());
-		str = buf;
-
-		for (int j = 1;j<=7;j++)
-		{
-			strseparate((char*)str.c_str(),str1,str2,"_");
-			switch(j)
-			{
-			case 1:
-				sCdevSdkParam.m_sDevId = str1;
-				break;
-			case 2:
-				sCdevSdkParam.m_nDevLine = atoi(str1.c_str());
-				break;
-			case 3:
-				sCdevSdkParam.m_nnchannel = atoi(str1.c_str());
-				break;
-			case 4:
-				commServerPort = atoi(str1.c_str());
-				break;
-			case 5:
-				rtspServerPort = atoi(str1.c_str());
-				break;
-			case 6:
-				deviceUserName = str1;
-				break;
-			case 7:
-				deviceSecret = str1;
-				break;
-			default:
-				break;
-			}
-			str = str2;
-
-		}
-		DeviceServer *stDeviceServer = new DeviceServer(commServerPort,rtspServerPort,deviceUserName,deviceSecret);
-		stDeviceServer->setCdevSdkParam(sCdevSdkParam);
-		stDeviceServer->start();
-		vcDeviceServer.push_back(stDeviceServer); 	
-		Sleep(100);
-	}
-	#endif
 	while(1)
 	{
 		Sleep(10000);
 		//printf("deviceServer is run \n");
 	}
 }
-int _tmain(int argc, _TCHAR* argv[])
-{
-	StartDeviceServer();
-	return 0;
-}
+
 //*********************************************************
 //Functiopn:			ServiceMain
 //Description:			服务主函数，这在里进行控制对服务控制的注册
@@ -409,10 +232,10 @@ BOOL IsInstalled()
 //			<author>niying <time>2006-8-10		<version>		<desc>
 //*********************************************************
 BOOL Install()
-{
-    if (IsInstalled())
+{  
+	if (IsInstalled())
 	{
-		MessageBox(NULL, (" create service OK"), szServiceName, MB_OK);
+		//zssMessageBox(NULL, (" create service OK"), szServiceName, MB_OK);
         return TRUE;
 	}
 
@@ -423,7 +246,6 @@ BOOL Install()
         MessageBox(NULL, ("Couldn't open service manager"), szServiceName, MB_OK);
         return FALSE;
     }
-
     // Get the executable file path
     CHAR szFilePath[MAX_PATH];
     ::GetModuleFileNameA(NULL, szFilePath, MAX_PATH);
@@ -434,7 +256,6 @@ BOOL Install()
         SERVICE_ALL_ACCESS, SERVICE_WIN32_OWN_PROCESS,
         SERVICE_DEMAND_START, SERVICE_ERROR_NORMAL,
         szFilePath, NULL, NULL, (""), NULL, NULL);
-
     if (hService == NULL)
     {
         ::CloseServiceHandle(hSCM);
@@ -538,8 +359,30 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 					 int       nCmdShow)
 {
 
-	StartDeviceServer();
+	Init();
+	dwThreadID = ::GetCurrentThreadId(); 
+	SERVICE_TABLE_ENTRY st[] =
+	{
+		{ (LPSTR)szServiceName, (LPSERVICE_MAIN_FUNCTION)ServiceMain },
+		{ NULL, NULL }
+	};
+	Install();
+	if (stricmp(lpCmdLine, "-i") == 0)
+	{
+		MessageBox(NULL, ("Couldn't open service manager -i"), szServiceName, MB_OK);
+		Install();
+	}
+	else if (stricmp(lpCmdLine, "-u") == 0)
+	{
+		Uninstall();
+	}
+	else
+	{
+		if (!::StartServiceCtrlDispatcher(st))
+		{
+			LogEvent(("Register Service Main Function Error!"));
+		}
+	}
 	return 0;
 }
-
 

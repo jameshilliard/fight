@@ -567,9 +567,11 @@ int CdevSdk::CmdPtzControl(std::string sdevid,unsigned int nchannel,int ptz_cmd,
 		smsg = "设备未登陆";
 		return nSdkRet;
 	}
-	printf("sdk重新取流 设备ID:%s 设备通道号:%d,云台命令:%d,云台操作:%d,云台参数:%d ",sdevid.c_str(),m_nnchannel,ptz_cmd,action,param);
-	nSdkRet = WMP_PtzControl(m_wmp_handle,sdevid.c_str(),nchannel,ptz_cmd,action,param);
-
+	g_logger.TraceInfo("sdk重新取流 设备ID:%s 设备通道号:%d,云台命令:%d,云台操作:%d,云台参数:%d ",sdevid.c_str(),m_nnchannel,ptz_cmd,action,param);
+	if(ptz_cmd!= WMP_PRESET_GOTO && ptz_cmd!= WMP_PRESET_SET && ptz_cmd!= CLE_PRE_SEQ)
+		nSdkRet = WMP_PtzControl(m_wmp_handle,sdevid.c_str(),nchannel,ptz_cmd,action,param);
+	else
+		nSdkRet = WMP_SetPreset(m_wmp_handle,sdevid.c_str(),nchannel,ptz_cmd,param,"test");
 	smsg = "sdk ret";
 	return nSdkRet;
 }

@@ -1,1 +1,1 @@
-rtmpServer -i
+wmp-plServer -i

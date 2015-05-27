@@ -49,7 +49,7 @@ void Logger::TraceKeyInfo(const char * strInfo, ...)
 	if(!strInfo)
 		return;
 	char pTemp[MAX_STR_LEN] = {0};
-	strcpy(pTemp, GetCurrentTime());
+	GetLogCurrentTime(pTemp,MAX_STR_LEN);
 	strcat(pTemp, KEYINFOPREFIX);
 	//获取可变形参
 	va_list arg_ptr = NULL;
@@ -71,7 +71,7 @@ void Logger::TraceError(const char* strInfo, ...)
 	if(!strInfo)
 		return;
 	char pTemp[MAX_STR_LEN] = {0};
-	strcpy(pTemp, GetCurrentTime());
+	GetLogCurrentTime(pTemp,MAX_STR_LEN);
 	strcat(pTemp, ERRORPREFIX);
 	va_list arg_ptr = NULL;
 	va_start(arg_ptr, strInfo);
@@ -90,7 +90,7 @@ void Logger::TraceWarning(const char * strInfo, ...)
 	if(!strInfo)
 		return;
 	char pTemp[MAX_STR_LEN] = {0};
-	strcpy(pTemp, GetCurrentTime());
+	GetLogCurrentTime(pTemp,MAX_STR_LEN);
 	strcat(pTemp, WARNINGPREFIX);
 	va_list arg_ptr = NULL;
 	va_start(arg_ptr, strInfo);
@@ -107,29 +107,30 @@ void Logger::TraceInfo(const char * strInfo, ...)
 	//判断当前的写日志级别，若设置只写错误和警告信息则函数返回
 	if(!strInfo)
 		return;
+	//进入临界区
+	boost::asio::detail::mutex::scoped_lock lock(mutex_);
 	char pTemp[MAX_STR_LEN] = {0};
-	strcpy(pTemp, GetCurrentTime());
+	GetLogCurrentTime(pTemp,MAX_STR_LEN);
 	strcat(pTemp,INFOPREFIX);
 	va_list arg_ptr = NULL;
 	va_start(arg_ptr, strInfo);
 	vsprintf(pTemp + strlen(pTemp), strInfo, arg_ptr);
 	va_end(arg_ptr);
-	printf(pTemp);
+	printf_s(pTemp);
 	printf("\r\n");
 	Trace(pTemp);
 	arg_ptr = NULL;
 }
 
 //获取系统当前时间
-char * Logger::GetCurrentTime()
+char * Logger::GetLogCurrentTime(char *tempString,unsigned int size)
 {
 	time_t curTime;
 	struct tm * pTimeInfo = NULL;
 	time(&curTime);
 	pTimeInfo = localtime(&curTime);
-	char temp[MAX_STR_LEN] = {0};
-	sprintf(temp, "%04d-%02d-%02d %02d:%02d:%02d",pTimeInfo->tm_year+1900,pTimeInfo->tm_mon+1,pTimeInfo->tm_mday, pTimeInfo->tm_hour, pTimeInfo->tm_min, pTimeInfo->tm_sec);
-	char * pTemp = temp;
+	sprintf(tempString, "%04d-%02d-%02d %02d:%02d:%02d",pTimeInfo->tm_year+1900,pTimeInfo->tm_mon+1,pTimeInfo->tm_mday, pTimeInfo->tm_hour, pTimeInfo->tm_min, pTimeInfo->tm_sec);
+	char * pTemp =tempString;
 	return pTemp;	
 }
 
@@ -146,8 +147,6 @@ void Logger::Trace(const char * strInfo)
 		return;
 	try
 	{
-		//进入临界区
-		boost::asio::detail::mutex::scoped_lock lock(mutex_);
 		//若文件流没有打开，则重新打开
 		if(!m_pFileStream)
 		{

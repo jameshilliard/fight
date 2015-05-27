@@ -33124,3 +33124,253 @@
 2015-05-26 03:40:50 Info: 停止解包 m_nAnalyzeHandle 0 devid:dx20
 2015-05-26 03:40:51 Info: sdk重新取流 设备ID:dx20 设备通道号:1,设备线路号:0,m_wmp_handle:0,取流返回:0 
 2015-05-26 03:41:33 Info: 停止解包 m_nAnalyzeHandle 0 devid:dx20
+2015-05-26 05:07:59 Info: commServer start:8018
+2015-05-26 05:07:59 Info: Play this stream using the URL :rtsp://192.168.1.108:61001/ch1/main/av_stream
+2015-05-26 05:07:59 Info: commServer start:8010
+2015-05-26 05:07:59 Info: Play this stream using the URL :rtsp://192.168.1.108:61002/ch1/main/av_stream
+2015-05-26 05:08:00 Info: Play this stream using the URL :rtsp://192.168.1.108:61003/ch1/main/av_stream
+2015-05-26 05:08:00 Info: commServer start:8012
+2015-05-26 05:08:00 Info: commServer start:8013
+2015-05-26 05:08:00 Info: Play this stream using the URL :rtsp://192.168.1.108:61004/ch1/main/av_stream
+2015-05-26 05:08:00 Info: commServer start:8015
+2015-05-26 05:08:00 Info: Play this stream using the URL :rtsp://192.168.1.108:61005/ch1/main/av_stream
+2015-05-26 05:08:00 Info: commServer start:8017
+2015-05-26 05:08:00 Info: Play this stream using the URL :rtsp://192.168.1.108:61006/ch1/main/av_stream
+2015-05-26 05:08:00 Info: commServer start:8016
+2015-05-26 05:08:00 Info: Play this stream using the URL :rtsp://192.168.1.108:61007/ch1/main/av_stream
+2015-05-26 05:08:00 Info: commServer start:8011
+2015-05-26 05:08:00 Info: Play this stream using the URL :rtsp://192.168.1.108:61008/ch1/main/av_stream
+2015-05-26 05:08:24 Info: sdk重新取流 设备ID:dx01 设备通道号:4,设备线路号:0,m_wmp_handle:0,取流返回:0 
+2015-05-26 05:08:25 Info: 停止解包 m_nAnalyzeHandle 0 devid:dx01
+2015-05-26 05:08:25 Info: sdk重新取流 设备ID:dx01 设备通道号:4,设备线路号:0,m_wmp_handle:0,取流返回:0 
+2015-05-26 05:08:35 Info: sdk重新取流 设备ID:dx02 设备通道号:1,设备线路号:0,m_wmp_handle:1,取流返回:0 
+2015-05-26 05:08:35 Info: 停止解包 m_nAnalyzeHandle 0 devid:dx01
+2015-05-26 05:08:38 Info: sdk重新取流 设备ID:dx02 设备通道号:1,设备线路号:0,m_wmp_handle:0,取流返回:0 
+2015-05-26 05:08:44 Info: handleEncoder video data
+2015-05-26 05:08:47 Info: sdk重新取流 设备ID:dx20 设备通道号:1,设备线路号:0,m_wmp_handle:1,取流返回:0 
+2015-05-26 05:08:49 Info: 停止解包 m_nAnalyzeHandle 0 devid:dx20
+2015-05-26 05:08:49 Info: sdk重新取流 设备ID:dx20 设备通道号:1,设备线路号:0,m_wmp_handle:0,取流返回:0 
+2015-05-26 05:08:50 Info: handleEncoder video data
+2015-05-26 05:08:56 Info: handleEncoder video data
+2015-05-26 05:09:02 Info: handleEncoder video data
+2015-05-26 05:09:02 Info: sdk重新取流 设备ID:dx11 设备通道号:1,设备线路号:2,m_wmp_handle:1,取流返回:15 
+2015-05-26 05:09:02 Info: 停止解包 m_nAnalyzeHandle 0 devid:dx20
+2015-05-26 05:09:08 Info: handleEncoder video data
+2015-05-26 05:09:14 Info: handleEncoder video data
+2015-05-26 05:09:15 Info: sdk重新取流 设备ID:dx11 设备通道号:1,设备线路号:2,m_wmp_handle:0,取流返回:15 
+2015-05-26 05:09:20 Info: handleEncoder video data
+2015-05-26 05:09:23 Info: sdk重新取流 设备ID:dx11 设备通道号:1,设备线路号:2,m_wmp_handle:0,取流返回:15 
+2015-05-26 05:09:26 Info: handleEncoder video data
+2015-05-26 05:09:32 Info: handleEncoder video data
+2015-05-26 05:09:38 Info: handleEncoder video data
+2015-05-26 05:09:44 Info: handleEncoder video data
+2015-05-26 05:09:50 Info: handleEncoder video data
+2015-05-26 05:09:56 Info: handleEncoder video data
+2015-05-26 05:10:02 Info: handleEncoder video data
+2015-05-26 05:10:08 Info: handleEncoder video data
+2015-05-26 05:10:14 Info: handleEncoder video data
+2015-05-26 05:10:20 Info: handleEncoder video data
+2015-05-26 05:10:26 Info: handleEncoder video data
+2015-05-26 05:10:32 Info: handleEncoder video data
+2015-05-26 05:10:38 Info: handleEncoder video data
+2015-05-26 05:10:44 Info: handleEncoder video data
+2015-05-26 05:10:50 Info: handleEncoder video data
+2015-05-26 05:10:56 Info: handleEncoder video data
+2015-05-26 05:11:02 Info: handleEncoder video data
+2015-05-26 05:11:08 Info: handleEncoder video data
+2015-05-26 21:22:50 Info: commServer start:8018
+2015-05-26 21:22:50 Info: Play this stream using the URL :rtsp://192.168.1.108:61001/ch1/main/av_stream
+2015-05-26 21:22:50 Info: commServer start:8010
+2015-05-26 21:22:50 Info: Play this stream using the URL :rtsp://192.168.1.108:61002/ch1/main/av_stream
+2015-05-26 21:22:50 Info: commServer start:8012
+2015-05-26 21:22:50 Info: Play this stream using the URL :rtsp://192.168.1.108:61003/ch1/main/av_stream
+2015-05-26 21:22:50 Info: Play this stream using the URL :rtsp://192.168.1.108:61004/ch1/main/av_stream
+2015-05-26 21:22:50 Info: commServer start:8013
+2015-05-26 21:22:50 Info: commServer start:8015
+2015-05-26 21:22:50 Info: Play this stream using the URL :rtsp://192.168.1.108:61005/ch1/main/av_stream
+2015-05-26 21:22:50 Info: commServer start:8017
+2015-05-26 21:22:50 Info: Play this stream using the URL :rtsp://192.168.1.108:61006/ch1/main/av_stream
+2015-05-26 21:22:51 Info: commServer start:8016
+2015-05-26 21:22:51 Info: Play this stream using the URL :rtsp://192.168.1.108:61007/ch1/main/av_stream
+2015-05-26 21:22:51 Info: commServer start:8011
+2015-05-26 21:22:51 Info: Play this stream using the URL :rtsp://192.168.1.108:61008/ch1/main/av_stream
+2015-05-26 21:23:12 Info: read http://60.12.220.24:81/ws/zyrh.asmx/GetDevicePlatLinkageConfig
+2015-05-26 21:23:15 Info: Play this stream using the URL :rtsp://192.168.1.108:61001/ch1/main/av_stream
+2015-05-26 21:23:15 Info: commServer start:8018
+2015-05-26 21:23:15 Info: Play this stream using the URL :rtsp://192.168.1.108:61002/ch1/main/av_stream
+2015-05-26 21:23:15 Info: commServer start:8010
+2015-05-26 21:23:15 Info: commServer start:8012
+2015-05-26 21:23:15 Info: Play this stream using the URL :rtsp://192.168.1.108:61003/ch1/main/av_stream
+2015-05-26 21:23:15 Info: Play this stream using the URL :rtsp://192.168.1.108:61004/ch1/main/av_stream
+2015-05-26 21:23:15 Info: commServer start:8013
+2015-05-26 21:23:15 Info: commServer start:8015
+2015-05-26 21:23:15 Info: Play this stream using the URL :rtsp://192.168.1.108:61005/ch1/main/av_stream
+2015-05-26 21:23:15 Info: commServer start:8017
+2015-05-26 21:23:15 Info: Play this stream using the URL :rtsp://192.168.1.108:61006/ch1/main/av_stream
+2015-05-26 21:23:15 Info: Play this stream using the URL :rtsp://192.168.1.108:61007/ch1/main/av_stream
+2015-05-26 21:23:15 Info: commServer start:8016
+2015-05-26 21:23:16 Info: commServer start:8011
+2015-05-26 21:23:16 Info: Play this stream using the URL :rtsp://192.168.1.108:61008/ch1/main/av_stream
+2015-05-26 21:31:07 Info: commServer start:8018
+2015-05-26 21:31:07 Info: Play this stream using the URL :rtsp://192.168.1.108:61001/ch1/main/av_stream
+2015-05-26 21:31:07 Info: commServer start:8010
+2015-05-26 21:31:07 Info: Play this stream using the URL :rtsp://192.168.1.108:61002/ch1/main/av_stream
+2015-05-26 21:31:07 Info: Play this stream using the URL :rtsp://192.168.1.108:61003/ch1/main/av_stream
+2015-05-26 21:31:07 Info: commServer start:8012
+2015-05-26 21:31:07 Info: commServer start:8013
+2015-05-26 21:31:07 Info: Play this stream using the URL :rtsp://192.168.1.108:61004/ch1/main/av_stream
+2015-05-26 21:31:07 Info: commServer start:8015
+2015-05-26 21:31:07 Info: Play this stream using the URL :rtsp://192.168.1.108:61005/ch1/main/av_stream
+2015-05-26 21:31:07 Info: commServer start:8017
+2015-05-26 21:31:07 Info: Play this stream using the URL :rtsp://192.168.1.108:61006/ch1/main/av_stream
+2015-05-26 21:31:07 Info: commServer start:8016
+2015-05-26 21:31:07 Info: Play this stream using the URL :rtsp://192.168.1.108:61007/ch1/main/av_stream
+2015-05-26 21:31:08 Info: commServer start:8011
+2015-05-26 21:31:08 Info: Play this stream using the URL :rtsp://192.168.1.108:61008/ch1/main/av_stream
+2015-05-26 21:31:19 Info: commServer start:8018
+2015-05-26 21:31:19 Info: Play this stream using the URL :rtsp://192.168.1.108:61001/ch1/main/av_stream
+2015-05-26 21:31:27 Info: Play this stream using the URL :rtsp://192.168.1.108:61002/ch1/main/av_stream
+2015-05-26 21:31:27 Info: commServer start:8010
+2015-05-27 00:09:42 Info: read http://60.12.220.24:81/ws/zyrh.asmx/GetDevicePlatLinkageConfig
+2015-05-27 00:09:44 Info: commServer start:8018
+2015-05-27 00:09:44 Info: Play this stream using the URL :rtsp://192.168.1.108:23802/ch1/main/av_stream
+2015-05-27 00:09:44 Info: commServer start:8010
+2015-05-27 00:09:44 Info: Play this stream using the URL :rtsp://192.168.1.108:23803/ch1/main/av_stream
+2015-05-27 00:09:44 Info: Play this stream using the URL :rtsp://192.168.1.108:23804/ch1/main/av_stream
+2015-05-27 00:09:44 Info: commServer start:8012
+2015-05-27 00:09:44 Info: commServer start:8013
+2015-05-27 00:09:44 Info: Play this stream using the URL :rtsp://192.168.1.108:23805/ch1/main/av_stream
+2015-05-27 00:09:44 Info: commServer start:8015
+2015-05-27 00:09:44 Info: Play this stream using the URL :rtsp://192.168.1.108:23806/ch1/main/av_stream
+2015-05-27 00:09:44 Info: commServer start:8017
+2015-05-27 00:09:44 Info: Play this stream using the URL :rtsp://192.168.1.108:23807/ch1/main/av_stream
+2015-05-27 00:09:44 Info: commServer start:8016
+2015-05-27 00:09:44 Info: Play this stream using the URL :rtsp://192.168.1.108:23808/ch1/main/av_stream
+2015-05-27 00:09:45 Info: commServer start:8011
+2015-05-27 00:09:45 Info: Play this stream using the URL :rtsp://192.168.1.108:23809/ch1/main/av_stream
+2015-05-27 00:12:59 Info: read http://60.12.220.24:81/ws/zyrh.asmx/GetDevicePlatLinkageConfig
+2015-05-27 00:13:01 Info: commServer start:8018
+2015-05-27 00:13:01 Info: Play this stream using the URL :rtsp://192.168.1.108:23802/ch1/main/av_stream
+2015-05-27 00:13:05 Info: commServer start:8010
+2015-05-27 00:13:05 Info: Play this stream using the URL :rtsp://192.168.1.108:23803/ch1/main/av_stream
+2015-05-27 00:15:34 Info: read http://60.12.220.24:81/ws/zyrh.asmx/GetDevicePlatLinkageConfig
+2015-05-27 00:15:36 Info: read http://60.12.220.24:81/ws/zyrh.asmx/GetDevicePlatLinkageConfig
+2015-05-27 00:15:37 Info: commServer start:8018
+2015-05-27 00:15:37 Info: Play this stream using the URL :rtsp://192.168.1.108:23802/ch1/main/av_stream
+2015-05-27 00:15:37 Info: commServer start:8010
+2015-05-27 00:15:37 Info: Play this stream using the URL :rtsp://192.168.1.108:23803/ch1/main/av_stream
+2015-05-27 00:15:37 Info: Play this stream using the URL :rtsp://192.168.1.108:58195/ch1/main/av_stream
+2015-05-27 00:15:37 Info: commServer start:8012
+2015-05-27 00:15:38 Info: commServer start:8013
+2015-05-27 00:15:38 Info: Play this stream using the URL :rtsp://192.168.1.108:23805/ch1/main/av_stream
+2015-05-27 00:15:38 Info: Play this stream using the URL :rtsp://192.168.1.108:23806/ch1/main/av_stream
+2015-05-27 00:15:38 Info: commServer start:8015
+2015-05-27 00:15:38 Info: commServer start:8017
+2015-05-27 00:15:38 Info: Play this stream using the URL :rtsp://192.168.1.108:23807/ch1/main/av_stream
+2015-05-27 00:15:38 Info: commServer start:8016
+2015-05-27 00:15:38 Info: Play this stream using the URL :rtsp://192.168.1.108:23808/ch1/main/av_stream
+2015-05-27 00:15:38 Info: Play this stream using the URL :rtsp://192.168.1.108:23809/ch1/main/av_stream
+2015-05-27 00:15:38 Info: commServer start:8011
+2015-05-27 00:16:13 Info: commServer start:8018
+2015-05-27 00:16:13 Info: Play this stream using the URL :rtsp://192.168.1.108:23802/ch1/main/av_stream
+2015-05-27 00:16:41 Info: commServer start:8010
+2015-05-27 00:16:41 Info: Play this stream using the URL :rtsp://192.168.1.108:23803/ch1/main/av_stream
+2015-05-27 00:19:10 Info: commServer start:8018
+2015-05-27 00:19:10 Info: Play this stream using the URL :rtsp://192.168.1.108:23802/ch1/main/av_stream
+2015-05-27 00:19:13 Info: commServer start:8010
+2015-05-27 00:19:13 Info: Play this stream using the URL :rtsp://192.168.1.108:58638/ch1/main/av_stream
+2015-05-27 00:19:17 Info: commServer start:8012
+2015-05-27 00:19:17 Info: Play this stream using the URL :rtsp://192.168.1.108:23804/ch1/main/av_stream
+2015-05-27 00:19:21 Info: commServer start:8013
+2015-05-27 00:19:21 Info: Play this stream using the URL :rtsp://192.168.1.108:58657/ch1/main/av_stream
+2015-05-27 00:19:23 Info: commServer start:8015
+2015-05-27 00:19:23 Info: Play this stream using the URL :rtsp://192.168.1.108:23806/ch1/main/av_stream
+2015-05-27 00:19:27 Info: commServer start:8017
+2015-05-27 00:19:27 Info: Play this stream using the URL :rtsp://192.168.1.108:23807/ch1/main/av_stream
+2015-05-27 00:19:32 Info: commServer start:8016
+2015-05-27 00:19:32 Info: Play this stream using the URL :rtsp://192.168.1.108:23808/ch1/main/av_stream
+2015-05-27 00:19:39 Info: commServer start:8011
+2015-05-27 00:19:39 Info: Play this stream using the URL :rtsp://192.168.1.108:23809/ch1/main/av_stream
+2015-05-27 00:25:31 Info: read http://60.12.220.24:81/ws/zyrh.asmx/GetDevicePlatLinkageConfig
+2015-05-27 00:29:21 Info: read http://60.12.220.24:81/ws/zyrh.asmx/GetDevicePlatLinkageConfig
+2015-05-27 00:29:27 Info: commServer start:8018
+2015-05-27 00:29:27 Info: Play this stream using the URL :rtsp://192.168.1.108:23802/ch1/main/av_stream
+2015-05-27 00:29:31 Info: Play this stream using the URL :rtsp://192.168.1.108:23803/ch1/main/av_stream
+2015-05-27 00:29:31 Info: commServer start:8010
+2015-05-27 00:29:33 Info: commServer start:8012
+2015-05-27 00:29:33 Info: Play this stream using the URL :rtsp://192.168.1.108:23804/ch1/main/av_stream
+2015-05-27 00:30:11 Info: commServer start:8013
+2015-05-27 00:30:11 Info: Play this stream using the URL :rtsp://192.168.1.108:23805/ch1/main/av_stream
+2015-05-27 00:30:45 Info: read http://60.12.220.24:81/ws/zyrh.asmx/GetDevicePlatLinkageConfig
+2015-05-27 00:30:47 Info: read http://60.12.220.24:81/ws/zyrh.asmx/GetDevicePlatLinkageConfig
+2015-05-27 00:30:48 Info: read http://60.12.220.24:81/ws/zyrh.asmx/GetDevicePlatLinkageConfig
+2015-05-27 00:30:50 Info: commServer start:8018
+2015-05-27 00:30:50 Info: Play this stream using the URL :rtsp://192.168.1.108:23802/ch1/main/av_stream
+2015-05-27 00:30:57 Info: commServer start:8010
+2015-05-27 00:30:57 Info: Play this stream using the URL :rtsp://192.168.1.108:23803/ch1/main/av_stream
+2015-05-27 00:31:19 Info: commServer start:8018
+2015-05-27 00:31:19 Info: Play this stream using the URL :rtsp://192.168.1.108:23802/ch1/main/av_stream
+2015-05-27 00:31:24 Info: commServer start:8010
+2015-05-27 00:31:24 Info: Play this stream using the URL :rtsp://192.168.1.108:23803/ch1/main/av_stream
+2015-05-27 00:31:24 Info: commServer start:8012
+2015-05-27 00:31:24 Info: Play this stream using the URL :rtsp://192.168.1.108:23804/ch1/main/av_stream
+2015-05-27 00:31:24 Info: commServer start:8013
+2015-05-27 00:31:24 Info: Play this stream using the URL :rtsp://192.168.1.108:23805/ch1/main/av_stream
+2015-05-27 00:31:24 Info: Play this stream using the URL :rtsp://192.168.1.108:23806/ch1/main/av_stream
+2015-05-27 00:31:24 Info: commServer start:8015
+2015-05-27 00:31:25 Info: commServer start:8017
+2015-05-27 00:31:25 Info: Play this stream using the URL :rtsp://192.168.1.108:23807/ch1/main/av_stream
+2015-05-27 00:31:25 Info: commServer start:8016
+2015-05-27 00:31:25 Info: Play this stream using the URL :rtsp://192.168.1.108:23808/ch1/main/av_stream
+2015-05-27 00:31:25 Info: commServer start:8011
+2015-05-27 00:31:25 Info: Play this stream using the URL :rtsp://192.168.1.108:23809/ch1/main/av_stream
+2015-05-27 00:31:45 Info: commServer start:8018
+2015-05-27 00:31:45 Info: Play this stream using the URL :rtsp://192.168.1.108:23802/ch1/main/av_stream
+2015-05-27 00:31:48 Info: Play this stream using the URL :rtsp://192.168.1.108:23803/ch1/main/av_stream
+2015-05-27 00:31:48 Info: commServer start:8010
+2015-05-27 00:32:00 Info: commServer start:8012
+2015-05-27 00:32:00 Info: Play this stream using the URL :rtsp://192.168.1.108:23804/ch1/main/av_stream
+2015-05-27 00:32:01 Info: Play this stream using the URL :rtsp://192.168.1.108:23805/ch1/main/av_stream
+2015-05-27 00:32:01 Info: commServer start:8013
+2015-05-27 00:32:01 Info: commServer start:8015
+2015-05-27 00:32:01 Info: Play this stream using the URL :rtsp://192.168.1.108:23806/ch1/main/av_stream
+2015-05-27 00:32:02 Info: Play this stream using the URL :rtsp://192.168.1.108:23807/ch1/main/av_stream
+2015-05-27 00:32:02 Info: commServer start:8017
+2015-05-27 00:32:02 Info: commServer start:8016
+2015-05-27 00:32:02 Info: Play this stream using the URL :rtsp://192.168.1.108:23808/ch1/main/av_stream
+2015-05-27 00:32:03 Info: commServer start:8011
+2015-05-27 00:32:03 Info: Play this stream using the URL :rtsp://192.168.1.108:23809/ch1/main/av_stream
+2015-05-27 00:32:53 Info: read http://60.12.220.24:81/ws/zyrh.asmx/GetDevicePlatLinkageConfig
+2015-05-27 00:32:55 Info: commServer start:8018
+2015-05-27 00:32:55 Info: Play this stream using the URL :rtsp://192.168.1.108:23802/ch1/main/av_stream
+2015-05-27 00:32:59 Info: commServer start:8010
+2015-05-27 00:32:59 Info: Play this stream using the URL :rtsp://192.168.1.108:23803/ch1/main/av_stream
+2015-05-27 00:33:55 Info: commServer start:8012
+2015-05-27 00:33:55 Info: Play this stream using the URL :rtsp://192.168.1.108:23804/ch1/main/av_stream
+2015-05-27 00:34:07 Info: commServer start:8013
+2015-05-27 00:34:07 Info: Play this stream using the URL :rtsp://192.168.1.108:23805/ch1/main/av_stream
+2015-05-27 00:39:11 Info: read http://60.12.220.24:81/ws/zyrh.asmx/GetDevicePlatLinkageConfig
+2015-05-27 00:39:13 Info: commServer start:8018
+2015-05-27 00:39:13 Info: Play this stream using the URL :rtsp://192.168.1.108:23802/ch1/main/av_stream
+2015-05-27 00:39:17 Info: commServer start:8010
+2015-05-27 00:39:17 Info: Play this stream using the URL :rtsp://192.168.1.108:53014/ch1/main/av_stream
+2015-05-27 00:39:33 Info: commServer start:8018
+2015-05-27 00:39:33 Info: Play this stream using the URL :rtsp://192.168.1.108:23802/ch1/main/av_stream
+2015-05-27 00:44:01 Info: commServer start:8018
+2015-05-27 00:44:01 Info: Play this stream using the URL :rtsp://192.168.1.108:23801/ch1/main/av_stream
+2015-05-27 00:44:02 Info: commServer start:8010
+2015-05-27 00:44:02 Info: Play this stream using the URL :rtsp://192.168.1.108:23802/ch1/main/av_stream
+2015-05-27 00:44:02 Info: commServer start:8020
+2015-05-27 00:44:02 Info: Play this stream using the URL :rtsp://192.168.1.108:23803/ch1/main/av_stream
+2015-05-27 00:44:07 Info: Play this stream using the URL :rtsp://192.168.1.108:23804/ch1/main/av_stream
+2015-05-27 00:44:07 Info: commServer start:8012
+2015-05-27 00:44:07 Info: commServer start:8013
+2015-05-27 00:44:07 Info: Play this stream using the URL :rtsp://192.168.1.108:23805/ch1/main/av_stream
+2015-05-27 00:44:12 Info: commServer start:8015
+2015-05-27 00:44:12 Info: Play this stream using the URL :rtsp://192.168.1.108:23806/ch1/main/av_stream
+2015-05-27 00:44:13 Info: commServer start:8017
+2015-05-27 00:44:13 Info: Play this stream using the URL :rtsp://192.168.1.108:23807/ch1/main/av_stream
+2015-05-27 00:44:13 Info: commServer start:8016
+2015-05-27 00:44:13 Info: Play this stream using the URL :rtsp://192.168.1.108:23808/ch1/main/av_stream
+2015-05-27 00:44:13 Info: commServer start:8011
+2015-05-27 00:44:13 Info: Play this stream using the URL :rtsp://192.168.1.108:23809/ch1/main/av_stream

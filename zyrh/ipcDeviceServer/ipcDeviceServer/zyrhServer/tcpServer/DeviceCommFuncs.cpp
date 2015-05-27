@@ -979,7 +979,7 @@ STATUS sendNetRetval(StreamSocket  &connfd, UINT32 retVal)
  * Return:  OK if successful, otherwise return error status number
  *======================================================================
  */
-STATUS netClientLogin(StreamSocket  &connfd, char *recvbuff, struct sockaddr_in *pClientSockAddr)
+STATUS netClientLogin(StreamSocket  &connfd, char *recvbuff, struct sockaddr_in *pClientSockAddr,const char *localUser,const char *localSecret)
 {
 	struct in_addr clientIpAddr;
 	struct sockaddr_in peer;
@@ -1023,7 +1023,7 @@ STATUS netClientLogin(StreamSocket  &connfd, char *recvbuff, struct sockaddr_in 
 		if ( loginData.version >= NETSDK_VERSION3_0 )
 		{
 			NET_INFO(("DS9000 login.\n"));
-			retVal = challenge_login(connfd, &loginData, &userID, &peer);
+			retVal = challenge_login(connfd, &loginData, &userID, &peer,localUser,localSecret);
 			if(retVal != OK)
 			{
 				NET_INFO(("DS9000 login failed\n"));

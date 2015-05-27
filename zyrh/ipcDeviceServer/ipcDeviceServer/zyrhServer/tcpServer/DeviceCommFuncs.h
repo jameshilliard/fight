@@ -30,8 +30,8 @@ typedef struct {
 } IpcDeviceParams;
 
 UINT32 checkByteSum(char *pBuf, int len);
-STATUS challenge_login(StreamSocket  &connfd, NET_LOGIN_REQ *reqdata, int *userid,struct sockaddr_in *pClientSockAddr);
-STATUS netClientLogin(StreamSocket  &connfd, char *recvbuff, struct sockaddr_in *pClientSockAddr);
+STATUS challenge_login(StreamSocket  &connfd, NET_LOGIN_REQ *reqdata, int *userid,struct sockaddr_in *pClientSockAddr,const char *localUser,const char *localSecret);
+STATUS netClientLogin(StreamSocket  &connfd, char *recvbuff, struct sockaddr_in *pClientSockAddr,const char *localUser,const char *localSecret);
 STATUS netClientLogout(StreamSocket  &connfd, char *recvbuff, struct sockaddr_in *pClientSockAddr);
 STATUS netClientReLogin(StreamSocket  &connfd, char *recvbuff, struct sockaddr_in *pClientSockAddr);
 STATUS netClientUserExchange(StreamSocket  &connfd, char *recvbuff, struct sockaddr_in *pClientSockAddr);

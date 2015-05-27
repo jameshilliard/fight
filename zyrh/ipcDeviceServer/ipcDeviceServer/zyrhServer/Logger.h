@@ -53,7 +53,7 @@ private:
 	//写文件操作
 	void Trace(const char * strInfo);
 	//获取当前系统时间
-	char * GetCurrentTime();
+	char * GetLogCurrentTime(char *tempString,unsigned int size);
 	//创建日志文件名称
 	void GenerateLogName();
 	//创建日志路径

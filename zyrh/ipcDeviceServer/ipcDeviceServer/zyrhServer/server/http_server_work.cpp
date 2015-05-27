@@ -47,7 +47,7 @@ void http_server_work::on_open(handler_ptr handler)
 
 void http_server_work::on_read(handler_ptr handler, std::size_t bytes_transferred)
 {
-// 	FILE* file = fopen("g://1.data","ab+");
+// 	FILE* file = fopen("g:\\1.data","ab+");
 // 	fwrite(handler->read_buffer().data(),1,bytes_transferred,file);
 // 	fclose(file);
 	m_httpRecvBuf.InsertData((char*)handler->read_buffer().data(),bytes_transferred);

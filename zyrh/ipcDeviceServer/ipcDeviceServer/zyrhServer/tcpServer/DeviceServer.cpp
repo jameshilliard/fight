@@ -32,10 +32,10 @@ int concovtPtzData(NET_PTZ_CTRL_DATA netPTZCtrlData,ptzControl *mptzControl)
 		case GOTO_PRESET:
 			mptzControl->ptz_cmd= WMP_PRESET_GOTO;
 			break;	
-		case FILL_PRE_SEQ:
+		case SET_PRESET:
 			mptzControl->ptz_cmd= WMP_PRESET_SET;
 			break;
-		case CLE_PRE_SEQ:
+		case CLE_PRESET:
 			mptzControl->ptz_cmd=  WMP_PRESET_DEL;
 			break;	
 		case TILT_UP:
@@ -121,7 +121,7 @@ STATUS DeviceServerConnection::reloveOnePacket(StreamSocket  &connfd,char *recvb
 	{
 	case NETCMD_LOGIN:           			/*user login*/			
 		NET_INFO(("NETCMD_LOGIN.\n"));
-		retVal = netClientLogin(connfd, recvbuff, pClientSockAddr);
+		retVal = netClientLogin(connfd, recvbuff, pClientSockAddr,m_IpcDeviceParams->m_userName.c_str(),m_IpcDeviceParams->m_secret.c_str());
 		break;
 	case NETCMD_RELOGIN:          			/*user relogin*/
 		NET_INFO(("NETCMD_RELOGIN.\n"));
@@ -264,7 +264,7 @@ void DeviceServerConnection::run()
 		}
 		else if(iRet<=0)
 		{
-			NET_INFO(("tcpServer:%d iRet %d breakout\n",m_IpcDeviceParams->m_commServerPort,iRet));
+			//NET_INFO(("tcpServer:%d iRet %d breakout\n",m_IpcDeviceParams->m_commServerPort,iRet));
 			socket().shutdown();
 			break;
 		}
@@ -303,7 +303,7 @@ void DeviceServer::setCdevSdkParam(CdevSdkParam sCdevSdkParam,CdevSdk *mCdevSdk)
 	m_ipcDeviceParams->m_userName=sCdevSdkParam.m_CdevChannelDeviceParam.m_sPlatDevName;
 	m_ipcDeviceParams->m_secret=sCdevSdkParam.m_CdevChannelDeviceParam.m_sPlatDevPwd;
 	m_ipcDeviceParams->m_sDevId=sCdevSdkParam.m_sDevId;
-	m_ipcDeviceParams->m_nnchannel=sCdevSdkParam.m_nnchannel;
+	m_ipcDeviceParams->m_nnchannel=sCdevSdkParam.m_CdevChannelDeviceParam.m_nChannelNo;
 
 }
 

@@ -85,9 +85,9 @@ extern void convertNetLoginReqByteOrder(NET_LOGIN_REQ_V6 *pLoginReq);
 STATUS genRandom(void);
 
 LOCAL STATUS genChallenge(UINT32 clientIp, char **out); 
-LOCAL STATUS verifyUser(char *username, char *chanllenge);
+LOCAL STATUS verifyUser(char *username, char *chanllenge,const char *localUser);
 #ifndef SUPPORT_IPV6
-LOCAL STATUS verifyChallengePassword(int *userIdx,  char *username , char *pwd, char *challenge, struct in_addr *clientIp, char *macAddr);
+LOCAL STATUS verifyChallengePassword(int *userIdx,  char *username , char *pwd, char *challenge, struct in_addr *clientIp, char *macAddr,const char *localUser,const char *localSecret);
 #else
  extern const struct in6_addr gLoop6Addr;
 extern const struct in6_addr gAny6Addr;
@@ -220,9 +220,9 @@ LOCAL STATUS genChallenge(UINT32 clientIp, char **out)
  *   Created: 01/03/2008 00 CST
  *  Revision: none
  ******************************************************************************/
-LOCAL STATUS verifyUser(char *username, char *challenge)
+LOCAL STATUS verifyUser(char *username, char *challenge,const char *localUser)
 {
-	#if 0
+	
 	int     i = 0;
     int     len = 0;
     int     clen = 0;
@@ -237,37 +237,36 @@ LOCAL STATUS verifyUser(char *username, char *challenge)
     }
 	
     inlen = strlen(username);
-    for(i = 0; i < MAX_USERNUM; i++)
-    {
-        memset(tmp, 0, NAME_LEN);
 
-        strncpy(usr, (char *)pDevCfgParam->user[i].username, NAME_LEN);
-        len = strlen(usr);
-        if(len == 0)
-        {
-            continue;
-        }
-		
-        clen = strlen(challenge);
-        /* encrypt user name */
-        encryptHMAC((unsigned char *)usr, len, (unsigned char *)challenge, clen, (unsigned char *)tmp);
-        if(strncmp(username, tmp, inlen))
-        {
-            continue;
-        }
-        else
-        {
-            NETPRT(("Match user: %s\n", usr));
-	     memcpy(username, usr, len+1);
-            return (i);
-        }
+    memset(tmp, 0, NAME_LEN);
+
+    strncpy(usr, localUser, NAME_LEN);
+    len = strlen(usr);
+    if(len == 0)
+    {
+       return (-1);
     }
+	
+    clen = strlen(challenge);
+    /* encrypt user name */
+    encryptHMAC((unsigned char *)usr, len, (unsigned char *)challenge, clen, (unsigned char *)tmp);
+    if(strncmp(username, tmp, inlen))
+    {
+        return (-1);
+    }
+    else
+    {
+        NETPRT(("Match user: %s  %s\n", usr,username));
+		memcpy(username, usr, len+1);
+        return (1);
+    }
+
 
     strcpy(username, "illegal username");
     NETPRT(("No user matched, challenge failed\n"));
 
     return (-1);
-	#endif
+	
 	return 1;
 }
 
@@ -293,9 +292,9 @@ LOCAL STATUS verifyUser(char *username, char *challenge)
  *   Created: 01/03/2008 00 CST
  *  Revision: none
  ******************************************************************************/
-LOCAL STATUS verifyChallengePassword(int *userIdx, char *username , char *pwd, char *challenge, struct in_addr *clientIp, char *macAddr)
+LOCAL STATUS verifyChallengePassword(int *userIdx, char *username , char *pwd, char *challenge, struct in_addr *clientIp, char *macAddr,const char *localUser,const char *localSecret)
 {
-	#if 0
+	
 	int     i = 0;
     int     len = 0;
     int     clen = 0;
@@ -307,18 +306,15 @@ LOCAL STATUS verifyChallengePassword(int *userIdx, char *username , char *pwd, c
     UINT32  permission, localPlayPermission;
     UINT32  netPrevPermission, netPlayPermission;
     USER_INFO *pUserInfo;
-    USER	userCfg;
-    DEVICECONFIG *pDevCfg = pDevCfgParam;
 
     if((NULL == pwd) || (NULL == challenge) || (NULL == userIdx))
     {
         return (NETRET_ERRORPASSWD);
     }
-
     currTime = time(NULL);
     clen = strlen(challenge);
 
-    index = verifyUser((char *)username, challenge);
+    index = verifyUser((char *)username, challenge,localUser);
     if(index < 0)
     {
         return (NETRET_ERRORPASSWD);
@@ -326,7 +322,7 @@ LOCAL STATUS verifyChallengePassword(int *userIdx, char *username , char *pwd, c
     *userIdx = index;
 	
     /*¼ì²éSDKµÇÂ¼µÄÌôÕ½´®ÃÜÂë*/
-    memcpy(tmp, pDevCfgParam->user[index].password, PASSWD_LEN);
+    memcpy(tmp, localSecret, PASSWD_LEN);
     len = strlen((char *)tmp);
     NETPRT(("original password: %s\n", tmp));
 
@@ -336,28 +332,7 @@ LOCAL STATUS verifyChallengePassword(int *userIdx, char *username , char *pwd, c
         NETPRT(("Incorrect user password, challenge failed\n"));
         return (NETRET_ERRORPASSWD);
     }
-
-    userCfg = pDevCfgParam->user[index];
-    #ifdef CHECK_CLIENT_IP
-    if(clientIp!=NULL && userCfg.ipAddr.v4.s_addr!=0 &&
-		clientIp->s_addr!=userCfg.ipAddr.v4.s_addr)
-    {
-		return NETRET_IP_MISMATCH;
-    }
-    #endif
-
-    #ifdef CHECK_MAC_ADDR
-     if(macAddr!=NULL && (userCfg.macAddr[0]!=0 || userCfg.macAddr[1]!=0
-			|| userCfg.macAddr[2]!=0 || userCfg.macAddr[3]!=0
-			|| userCfg.macAddr[4]!=0 || userCfg.macAddr[5]!=0)
-		&& memcmp(macAddr, userCfg.macAddr, MACADDR_LEN)!=0)
-      {
-		return NETRET_MAC_MISMATCH;
-      }
-      #endif
-	  
-    NETPRT(("Correct user password, challenge success\n"));
-	#endif
+    NETPRT(("Correct user password, challenge success  %s  %s\n",pwd,digest));
     return (OK);
 }
 #else
@@ -469,7 +444,7 @@ LOCAL STATUS verifyChallengePassword(int *userIdx, char *username , char *pwd, c
  *  Revision: none
  ******************************************************************************/
 STATUS challenge_login(StreamSocket  &connfd, NET_LOGIN_REQ *reqdata, int *userid,
-        struct sockaddr_in *pClientSockAddr)
+        struct sockaddr_in *pClientSockAddr,const char *localUser,const char *localSecret)
 {
     int     ret = -1;
     int     userIdx = -1;
@@ -486,7 +461,6 @@ STATUS challenge_login(StreamSocket  &connfd, NET_LOGIN_REQ *reqdata, int *useri
 	
     time_t currTime;
 
-    //zss++if((connfd < 0) || (NULL == reqdata))
 	if((NULL == reqdata))
     {
         return NETRET_OPER_NOPERMIT;
@@ -535,7 +509,7 @@ STATUS challenge_login(StreamSocket  &connfd, NET_LOGIN_REQ *reqdata, int *useri
 		currTime = time(NULL);
 		clientIpAddr.s_addr = reqdata->clientIp;
 		memcpy(username,(char *)login_req.username, NAME_LEN);
-		ret = verifyChallengePassword(&userIdx, username, (char *)login_req.password, buf, &clientIpAddr, (char *)reqdata->clientMac);
+		ret = verifyChallengePassword(&userIdx, username, (char *)login_req.password, buf, &clientIpAddr, (char *)reqdata->clientMac,localUser,localSecret);
 		if(ret != OK)
 		{
 		   /* illegal access */

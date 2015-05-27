@@ -22,7 +22,6 @@ public:
 	void UpateDeviceInfo();
 	BOOL decodeDeviceInfo(std::string deviceInfoString,CdevSdkParam &mCdevSdkParam);
 
-
 private:
 	CMyMap<std::string,boost::shared_ptr<CdevSdk>> m_DevList;
 	CMyMap2<boost::shared_ptr<CdevSdk>> m_DevListIndex;
@@ -36,5 +35,6 @@ private:
 	//#模拟IPC服务器停流时间单位分钟
 	unsigned int m_stopStreamTimeOut;
 	unsigned int m_nRtspServerStartPort;
+	unsigned int m_nRtspServerStopPort;
 	bool m_bDevManagerStart;
 };

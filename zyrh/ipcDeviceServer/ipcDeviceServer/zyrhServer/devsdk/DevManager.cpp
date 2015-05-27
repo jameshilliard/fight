@@ -11,36 +11,7 @@ std::string GetDevIdkey(std::string sDevId,int nchannel);
 
 CDevManager::CDevManager()
 {
-	char buf[2048];
-	int i=1000; 
 
-	char FilePath[MAX_PATH+1]= {0};
-	char *p = NULL;
-
-	GetModuleFileNameA(NULL, FilePath, sizeof(FilePath)); //获取程序当前执行文件名
-	p=strrchr(FilePath, '\\');                       
-	*p='\0';
-	GetCurrentDirectoryA(1000,buf);   //得到当前工作路径 
-	m_configPath = FilePath;
-	m_configPath += "/config.ini";
-
-	memset(buf,0,sizeof(buf));
-	GetPrivateProfileString("ZyrhOpenService","DeviceInfoHttpAddr","",buf,2048,m_configPath.c_str());
-	m_DeviceInfoHttpAddr=buf;
-
-	memset(buf,0,sizeof(buf));
-	GetPrivateProfileString("ZyrhOpenService","ServerStopStreamType","",buf,2048,m_configPath.c_str());
-	m_serverStopStreamType=atoi(buf);
-
-	memset(buf,0,sizeof(buf));
-	GetPrivateProfileString("ZyrhOpenService","StopStreamTimeOut","",buf,2048,m_configPath.c_str());
-	m_stopStreamTimeOut=atoi(buf);
-
-	memset(buf,0,sizeof(buf));
-	GetPrivateProfileString("ZyrhOpenService","RtspServerStartPort","",buf,2048,m_configPath.c_str());
-	m_nRtspServerStartPort=atoi(buf);
-
-	m_bDevManagerStart=true;
 }
 CDevManager::~CDevManager()
 {
@@ -67,18 +38,18 @@ int CDevManager::AddNewDev(std::string sDevID,unsigned int nDevLine,unsigned int
 int CDevManager::AddNewDev(CdevSdkParam mCdevSdkParam)
 {
 	boost::asio::detail::mutex::scoped_lock lock(mutex_);
-	if (!GetDev(mCdevSdkParam.m_sDevId,mCdevSdkParam.m_nnchannel))
+	if (!GetDev(mCdevSdkParam.m_sDevId,mCdevSdkParam.m_CdevChannelDeviceParam.m_nChannelNo))
 	{
 		boost::shared_ptr<CdevSdk> devPtr(new CdevSdk);
-		m_nRtspServerStartPort++;
 		mCdevSdkParam.m_CdevChannelDeviceParam.m_nRtspServerStartPort=m_nRtspServerStartPort;
-		m_DevList.AddData(GetDevIdkey(mCdevSdkParam.m_sDevId,mCdevSdkParam.m_nnchannel),devPtr);
+		m_DevList.AddData(GetDevIdkey(mCdevSdkParam.m_sDevId,mCdevSdkParam.m_CdevChannelDeviceParam.m_nChannelNo),devPtr);
 		m_DevListIndex.AddData(devPtr->m_nIndex,devPtr);
+		m_nRtspServerStartPort++;
 		return devPtr->StartDev(mCdevSdkParam);
 	}
 	else
 	{
-		boost::shared_ptr<CdevSdk> devPtr=GetDev(mCdevSdkParam.m_sDevId,mCdevSdkParam.m_nnchannel);	
+		boost::shared_ptr<CdevSdk> devPtr=GetDev(mCdevSdkParam.m_sDevId,mCdevSdkParam.m_CdevChannelDeviceParam.m_nChannelNo);	
 		if(!devPtr->m_CdevSdkParam.isEqual(mCdevSdkParam))
 			return devPtr->StartDev(mCdevSdkParam);
 	}
@@ -195,7 +166,6 @@ BOOL CDevManager::decodeDeviceInfo(std::string deviceInfoString,CdevSdkParam &mC
 		TiXmlElement *ChanneElement=NULL;
 		if(ChannelListElement)
 			ChanneElement=ChannelListElement->FirstChildElement("ZyrhChannelInfo");
-
 		while(ChanneElement)
 		{
 			TiXmlElement *ChannelNoElement=ChanneElement->FirstChildElement("ChannelNo");
@@ -231,7 +201,7 @@ BOOL CDevManager::decodeDeviceInfo(std::string deviceInfoString,CdevSdkParam &mC
 			}
 			AddNewDev(mCdevSdkParam);
 			Sleep(100);
-			ChanneElement=ChanneElement->NextSiblingElement();
+			ChanneElement=ChanneElement->NextSiblingElement("ZyrhChannelInfo");
 		}
 		curDeviceInfo=curDeviceInfo->NextSiblingElement();
 	}
@@ -242,15 +212,41 @@ BOOL CDevManager::decodeDeviceInfo(std::string deviceInfoString,CdevSdkParam &mC
 
 void CDevManager::StartUpateDeviceInfo()
 {
-
 	char buf[2048]={0};
 	CHTTPClient sHttpClient;
-	GetPrivateProfileString("ZyrhOpenService","Sdkclient","",buf,2048,m_configPath.c_str());
 	std::string str,str1,str2;
+	int iWebPort=0;
+	char FilePath[MAX_PATH+1]= {0};
+	char *p = NULL;
+
+	GetModuleFileNameA(NULL, FilePath, sizeof(FilePath)); //获取程序当前执行文件名
+	p=strrchr(FilePath, '\\');                       
+	*p='\0';
+
+	m_configPath = FilePath;
+	m_configPath += "/config.ini";
+
+	memset(buf,0,sizeof(buf));
+	GetPrivateProfileString("ZyrhOpenService","ServerStopStreamType","",buf,2048,m_configPath.c_str());
+	m_serverStopStreamType=atoi(buf);
+
+	memset(buf,0,sizeof(buf));
+	GetPrivateProfileString("ZyrhOpenService","StopStreamTimeOut","",buf,2048,m_configPath.c_str());
+	m_stopStreamTimeOut=atoi(buf);
+
+	memset(buf,0,sizeof(buf));
+	GetPrivateProfileString("ZyrhOpenService","RtspServerPort","",buf,2048,m_configPath.c_str());
+	int iRet=sscanf(buf,"%d-%d",&m_nRtspServerStartPort,&m_nRtspServerStopPort);
+	if(iRet!=2)
+	{
+		g_logger.TraceInfo("RtspServerPort设置异常");
+	}
+	m_bDevManagerStart=true;
+	GetPrivateProfileString("ZyrhOpenService","Sdkclient","",buf,2048,m_configPath.c_str());
 	str = buf;
 
 	CdevSdkParam sCdevSdkParam;
-	for (int i = 1;i<=5;i++)
+	for (int i = 1;i<=6;i++)
 	{
 		strseparate((char*)str.c_str(),str1,str2,"_");
 		switch(i)
@@ -270,11 +266,21 @@ void CDevManager::StartUpateDeviceInfo()
 		case 5:
 			sCdevSdkParam.m_spassword = str1;
 			break;
+		case 6:
+			iWebPort = atoi(str1.c_str());
+			break;
+		default:
+			break;
 		}
 		str = str2;
 	}
+
 	sCdevSdkParam.m_CdevChannelDeviceParam.m_nRtspServerStartPort=m_nRtspServerStartPort;
-	
+	sCdevSdkParam.m_CdevChannelDeviceParam.m_nRtspServerStopPort=m_nRtspServerStopPort;
+	memset(buf,0,sizeof(buf));
+	sprintf(buf,"http://%s:%d/ws/zyrh.asmx/GetDevicePlatLinkageConfig",sCdevSdkParam.m_sSdkServerIp.c_str(),iWebPort);
+	m_DeviceInfoHttpAddr=buf;
+
 	while(m_bDevManagerStart)
 	{
 		std::string strRet="";

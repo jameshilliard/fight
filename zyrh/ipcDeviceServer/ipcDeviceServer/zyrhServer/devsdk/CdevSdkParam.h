@@ -14,6 +14,7 @@ public:
 		m_sPlatDevPwd="";
 		m_nPlatDevPort=0;
 		m_nRtspServerStartPort=0;
+		m_nRtspServerStopPort=0;
 	}
 
 	bool CdevChannelDeviceParam::isEqual(CdevChannelDeviceParam mCdevChannelDeviceParam)
@@ -42,6 +43,7 @@ public:
 	std::string m_sPlatDevPwd;
 	unsigned int m_nPlatDevPort;
 	unsigned int m_nRtspServerStartPort;
+	unsigned int m_nRtspServerStopPort;
 };
 
 class CdevSdkParam
@@ -58,7 +60,6 @@ public:
 
 		m_nDevLine=0;
 		m_devNo=0;
-		m_nnchannel=0;
 		m_sDevId="";
 
 		m_nChannelQuantity=0;
@@ -72,8 +73,6 @@ public:
 			return false;
 		if(m_nDevLine!=mCdevSdkParam.m_nDevLine)
 			return false;
-		if(m_nnchannel!=mCdevSdkParam.m_nnchannel)
-			return false;
 		if(m_sDevId!=mCdevSdkParam.m_sDevId)
 			return false;		
 		if(m_nChannelQuantity!=mCdevSdkParam.m_nChannelQuantity)
@@ -86,8 +85,7 @@ public:
 	}
 
 	CdevSdkParam(std::string sSdkServerIp,unsigned int nSdkServerPort,std::string sPassword,
-		std::string sUserName,unsigned int nServerLine,unsigned int nDevLine,
-		unsigned int nChannel,std::string sDevId)
+		std::string sUserName,unsigned int nServerLine,unsigned int nDevLine,std::string sDevId)
 	{
 		m_sSdkServerIp=sSdkServerIp;
 		m_nSdkServerPort=nSdkServerPort;
@@ -96,7 +94,6 @@ public:
 		m_nServerLine=nServerLine;
 
 		m_nDevLine=nDevLine;
-		m_nnchannel=nChannel;
 		m_sDevId=sDevId;
 
 	};
@@ -111,7 +108,6 @@ public:
 	unsigned int 	m_nServerLine;
 
 	unsigned int 	m_nDevLine;
-	unsigned int 	m_nnchannel;
 	std::string 	m_sDevId;
 
 	unsigned int    m_nChannelQuantity;
