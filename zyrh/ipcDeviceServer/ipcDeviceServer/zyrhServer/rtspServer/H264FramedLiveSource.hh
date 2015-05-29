@@ -14,7 +14,7 @@ public:
 			return;
 		m_ptCdevSdk = deviceSource;
 		m_ptCdevSdk->addDeviceSource(&m_h264Data);
-		//m_ptCdevSdk->ReStartDev();
+		m_ptCdevSdk->ReStartDev();
 	}
 
 protected:

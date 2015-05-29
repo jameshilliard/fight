@@ -352,7 +352,11 @@ void LogEvent(LPCSTR pFormat, ...)
 		DeregisterEventSource(hEventSource);
 	}
 }
-
+int _tmain(int argc, TCHAR* argv[], TCHAR* envp[])
+{
+	StartDeviceServer();
+	return 0;
+}
 
 int APIENTRY WinMain(HINSTANCE hInstance,
 					 HINSTANCE hPrevInstance,

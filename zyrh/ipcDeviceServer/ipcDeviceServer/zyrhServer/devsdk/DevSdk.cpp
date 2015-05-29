@@ -546,7 +546,7 @@ bool CdevSdk::ReStartDev()
 		WMP_TRANS_UDP,//trans_mode:WMP_TRANS_TCP/WMP_TRANS_UDP  #define WMP_TRANS_TCP	1#define WMP_TRANS_UDP	2
 		m_nDevLine,//dev_line:设备线路号
 		CBF_OnStreamPlay, (void*)m_nIndex,(int *)&m_stream_handle);
-	g_logger.TraceInfo("sdk重新取流 设备ID:%s 设备通道号:%d,设备线路号:%d,m_wmp_handle:%d,取流返回:%d ",m_sDevId.c_str(),m_nnchannel,m_nDevLine,m_wmp_handle,ret);
+	//g_logger.TraceInfo("sdk重新取流 设备ID:%s 设备通道号:%d,设备线路号:%d,m_wmp_handle:%d,取流返回:%d ",m_sDevId.c_str(),m_nnchannel,m_nDevLine,m_wmp_handle,ret);
 
 	if (ret != 0)
 	{
@@ -1114,6 +1114,7 @@ int CdevSdk::startRtspServer()
 	{
 		g_logger.TraceInfo("CException--\n");
 	}
+	free(rtspServer);
 	return 0;
 }
 
