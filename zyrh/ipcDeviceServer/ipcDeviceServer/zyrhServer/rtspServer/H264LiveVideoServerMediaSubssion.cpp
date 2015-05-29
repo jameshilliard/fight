@@ -20,7 +20,7 @@ H264LiveVideoServerMediaSubssion::H264LiveVideoServerMediaSubssion(UsageEnvironm
 
 H264LiveVideoServerMediaSubssion::~H264LiveVideoServerMediaSubssion()
 {
-	m_ptCdevSdk=NULL;
+
 }
 
 FramedSource* H264LiveVideoServerMediaSubssion::createNewStreamSource(unsigned clientSessionId, unsigned& estBitrate)

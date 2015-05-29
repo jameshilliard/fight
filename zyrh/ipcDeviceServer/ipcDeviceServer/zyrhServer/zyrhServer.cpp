@@ -92,6 +92,7 @@ void StartDeviceServer()
 		exit(0);
 		return ;
 	}
+	WMP_Init();
 	CGlobalClass::GetInstance()->GetDevManager()->StartUpateDeviceInfo();
 	while(1)
 	{

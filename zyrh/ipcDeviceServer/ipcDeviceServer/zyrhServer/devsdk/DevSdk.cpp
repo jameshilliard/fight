@@ -550,6 +550,7 @@ bool CdevSdk::ReStartDev()
 
 	if (ret != 0)
 	{
+		StopPlay();
 		return false;
 	}
 	return true;
@@ -709,7 +710,8 @@ bool CdevSdk::GetVideoData(std::vector<std::string > *vDeviceSource,unsigned cha
 			if(timeOut>300)
 				break;
 			bFindFlag=vDeviceSource->empty();
-		}while(bFindFlag);
+		}
+		while(bFindFlag);
 		boost::asio::detail::mutex::scoped_lock lock(mutex_HandleVideo);
 		if(!vDeviceSource->empty())
 		{

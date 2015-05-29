@@ -107,8 +107,6 @@ void Logger::TraceInfo(const char * strInfo, ...)
 	//判断当前的写日志级别，若设置只写错误和警告信息则函数返回
 	if(!strInfo)
 		return;
-	//进入临界区
-	boost::asio::detail::mutex::scoped_lock lock(mutex_);
 	char pTemp[MAX_STR_LEN] = {0};
 	GetLogCurrentTime(pTemp,MAX_STR_LEN);
 	strcat(pTemp,INFOPREFIX);
@@ -117,7 +115,7 @@ void Logger::TraceInfo(const char * strInfo, ...)
 	vsprintf(pTemp + strlen(pTemp), strInfo, arg_ptr);
 	va_end(arg_ptr);
 	printf_s(pTemp);
-	printf("\r\n");
+	printf_s("\r\n");
 	Trace(pTemp);
 	arg_ptr = NULL;
 }
@@ -147,6 +145,8 @@ void Logger::Trace(const char * strInfo)
 		return;
 	try
 	{
+		//进入临界区
+		boost::asio::detail::mutex::scoped_lock lock(mutex_);
 		//若文件流没有打开，则重新打开
 		if(!m_pFileStream)
 		{

@@ -21,8 +21,9 @@ H264FramedLiveSource* H264FramedLiveSource::createNew(UsageEnvironment& env, Cde
 
 H264FramedLiveSource::~H264FramedLiveSource()
 {
+	if(m_ptCdevSdk==NULL)
+		return;
 	m_ptCdevSdk->removeDeviceSource(&m_h264Data);
-	m_ptCdevSdk=NULL;
 }
 
 
@@ -32,8 +33,11 @@ void H264FramedLiveSource::doGetNextFrame()
 	unsigned int frameSize=0;
 	int i=0;
 	bool bRet=true;
+	if(m_ptCdevSdk==NULL)
+		return;
 	//while(bRet)
 	{
+		
 		bRet=m_ptCdevSdk->GetVideoData(&m_h264Data,fTo+dataSize,frameSize,fMaxSize-dataSize,m_curVideoIndex);
 		dataSize+=frameSize;
 	}
