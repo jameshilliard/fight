@@ -4,17 +4,20 @@
 #include "H264VideoFileServerMediaSubsession.hh"
 #include "H264VideoStreamFramer.hh"
 
-#if 0
+
 #pragma comment(lib,"G:\\OnLineProject\\openSource\\live.2015.04.01\\live\\lib\\libBasicUsageEnvironment.lib")
 #pragma comment(lib,"G:\\OnLineProject\\openSource\\live.2015.04.01\\live\\lib\\libgroupsock.lib")
 #pragma comment(lib,"G:\\OnLineProject\\openSource\\live.2015.04.01\\live\\lib\\libliveMedia.lib")
 #pragma comment(lib,"G:\\OnLineProject\\openSource\\live.2015.04.01\\live\\lib\\libUsageEnvironment.lib")
-#endif
 
+
+#if 0
 #pragma comment(lib,"D:\\WorkSpace\\openSource\\live.2015.04.01\\live\\lib\\libBasicUsageEnvironment.lib")
 #pragma comment(lib,"D:\\WorkSpace\\openSource\\live.2015.04.01\\live\\lib\\libgroupsock.lib")
 #pragma comment(lib,"D:\\WorkSpace\\openSource\\live.2015.04.01\\live\\lib\\libliveMedia.lib")
 #pragma comment(lib,"D:\\WorkSpace\\openSource\\live.2015.04.01\\live\\lib\\libUsageEnvironment.lib")
+#endif
+
 
 class H264LiveVideoServerMediaSubssion : public H264VideoFileServerMediaSubsession {
 
@@ -29,7 +32,7 @@ protected: // redefined virtual functions
 	FramedSource* createNewStreamSource(unsigned clientSessionId,unsigned& estBitrate);
 public:
 	CdevSdk *m_ptCdevSdk;
-	char fFileName[100];
+	char fFileName[256];
 	//int Server_datasize;//数据区大小指针
 	//unsigned char  *Server_databuf;//数据区指针
 	//bool Server_dosent;//发送标示

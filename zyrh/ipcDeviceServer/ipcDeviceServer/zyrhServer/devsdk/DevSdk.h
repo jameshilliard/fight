@@ -49,6 +49,7 @@ public:
 	int  CdevSdk::startRtspServer();
 	void CdevSdk::stopRtspServerThread();
 	void CdevSdk::StartRtspServerThread();
+	void RtspOnTime(const boost::system::error_code& e);
 	//zss--
 private:
 	void ResetParam();
@@ -64,7 +65,6 @@ public:
 	std::string m_sServerIp;
 	unsigned int m_nServerPort;
 	unsigned int m_nServerLine;
-
 
 	std::string m_spassword;
 	unsigned int m_nDevLine;
@@ -107,7 +107,9 @@ public:
 
 	typedef boost::shared_ptr<boost::asio::deadline_timer> timer_ptr;
 	timer_ptr m_io_timer_Ptr;
+	timer_ptr m_rtsp_timer_Ptr;
 	boost::asio::io_service* m_pIoService;
+	boost::asio::io_service* m_pRtspService;
 	int nTimeTest;
 	int m_nType;
 	std::string m_srtmpurl;
@@ -118,6 +120,8 @@ public:
 	CThread m_rtspServerThread;
 	bool	m_rtspServerStart;
 	CdevSdkParam m_CdevSdkParam;
+	char	m_watchVariable;
 	DeviceServer m_DeviceServer;
+	time_t  m_rtspTime;
 	//zss--
 };

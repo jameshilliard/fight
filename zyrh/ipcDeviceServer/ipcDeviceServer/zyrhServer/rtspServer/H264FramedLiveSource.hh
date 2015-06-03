@@ -8,14 +8,7 @@ class H264FramedLiveSource : public FramedSource
 {
 public:
 	static H264FramedLiveSource* createNew(UsageEnvironment& env,CdevSdk *ptCdevSdk, unsigned preferredFrameSize = 0, unsigned playTimePerFrame = 0);
-	void setDeviceSource(CdevSdk *deviceSource)
-	{
-		if(deviceSource==NULL)
-			return;
-		m_ptCdevSdk = deviceSource;
-		m_ptCdevSdk->addDeviceSource(&m_h264Data);
-		m_ptCdevSdk->ReStartDev();
-	}
+	void setDeviceSource(CdevSdk *deviceSource);
 
 protected:
 	H264FramedLiveSource(UsageEnvironment& env,CdevSdk *ptCdevSdk, unsigned preferredFrameSize, unsigned playTimePerFrame);

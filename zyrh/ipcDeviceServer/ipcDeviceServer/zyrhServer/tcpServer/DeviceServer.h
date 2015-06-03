@@ -30,6 +30,9 @@ using Poco::Net::StreamSocket;
 using Poco::Net::TCPServerConnection;
 using Poco::Net::TCPServerConnectionFactory;
 using Poco::Net::TCPServer;
+using Poco::Net::TCPServerParams;
+using Poco::Net::SocketAddress;
+
 
 #define Poco_NO_UNWINDOWS
 
@@ -44,7 +47,7 @@ class DeviceServerConnection: public TCPServerConnection
 {
 public:
 	DeviceServerConnection(const StreamSocket& s,IpcDeviceParams *ipcDeviceParams,CdevSdk * nCdevSdk);
-	STATUS reloveOnePacket(StreamSocket  &connfd,char *recvbuff,UINT32 bufferSize,void *param);
+	STATUS reloveOnePacket(StreamSocket  &connfd,char *recvbuff,UINT32 bufferSize,void *param,UINT32 &mNetCmd);
 	void run();
 public:
 	IpcDeviceParams *m_IpcDeviceParams;

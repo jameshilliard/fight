@@ -11,11 +11,21 @@ H264FramedLiveSource::H264FramedLiveSource(UsageEnvironment& env,CdevSdk *ptCdev
 	m_curVideoIndex=0;
 }
 
+void H264FramedLiveSource::setDeviceSource(CdevSdk *deviceSource)
+{
+	if(deviceSource==NULL)
+		return;
+	m_ptCdevSdk = deviceSource;
+	m_ptCdevSdk->addDeviceSource(&m_h264Data);
+	m_ptCdevSdk->ReStartDev();
+}
+
 H264FramedLiveSource* H264FramedLiveSource::createNew(UsageEnvironment& env, CdevSdk *ptCdevSdk, unsigned preferredFrameSize, unsigned playTimePerFrame)
 {
 	//static H264FramedLiveSource  newSource(env, nCdevSdkParam, preferredFrameSize, playTimePerFrame);
 	H264FramedLiveSource* newSource = new H264FramedLiveSource(env,ptCdevSdk, preferredFrameSize, playTimePerFrame);
-	newSource->setDeviceSource(ptCdevSdk);
+	if(newSource)
+		newSource->setDeviceSource(ptCdevSdk);
 	return newSource;
 }
 

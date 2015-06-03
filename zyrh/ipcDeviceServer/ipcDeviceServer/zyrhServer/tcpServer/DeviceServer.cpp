@@ -105,7 +105,7 @@ int concovtPtzData(NET_PTZ_CTRL_DATA netPTZCtrlData,ptzControl *mptzControl)
 	return 0;
 }
 	
-STATUS DeviceServerConnection::reloveOnePacket(StreamSocket  &connfd,char *recvbuff,UINT32 bufferSize,void *param)
+STATUS DeviceServerConnection::reloveOnePacket(StreamSocket  &connfd,char *recvbuff,UINT32 bufferSize,void *param,UINT32 &mNetCmd)
 {
 	NETCMD_HEADER netCmdHeader;
 	UINT32 cmdLength, leftLen;
@@ -117,6 +117,7 @@ STATUS DeviceServerConnection::reloveOnePacket(StreamSocket  &connfd,char *recvb
 	netCmdHeader.netCmd = ntohl(netCmdHeader.netCmd);
 	IpcDeviceParams *ptrIpcDeviceParams=(IpcDeviceParams *)param;
 	NET_INFO(("server Port:%d rtspServer port:%d netCmdHeader.netCmd = 0x%0x \n",ptrIpcDeviceParams->m_commServerPort,ptrIpcDeviceParams->m_rtspServerPort,netCmdHeader.netCmd));
+	mNetCmd=netCmdHeader.netCmd;
 	switch(netCmdHeader.netCmd)
 	{
 	case NETCMD_LOGIN:           			/*user login*/			
@@ -221,7 +222,7 @@ STATUS DeviceServerConnection::reloveOnePacket(StreamSocket  &connfd,char *recvb
 		retVal = netClientSetDevTime(connfd, recvbuff, pClientSockAddr);
 		break;
 	default:
-		NET_INFO(("no support cmd.\n"));
+		NET_INFO(("no support cmd. 0x%x\n",netCmdHeader.netCmd));
 		char tempString[]={0x00,0x00,0x00,0x10,0x00,0x00,0x00,0x1,0x00,0x00,0x00,0x1,0x00,0x00,0x00,0x0};
 		retVal=connfd.sendBytes((char *)&tempString, sizeof(tempString),0);
 		break;
@@ -232,10 +233,11 @@ STATUS DeviceServerConnection::reloveOnePacket(StreamSocket  &connfd,char *recvb
 void DeviceServerConnection::run()
 {
 	int  cmdLength=0;
+	UINT32	mNetCmd=0;
 	char buffer[BUFFER_SIZE];
 	Timespan mTimespan(30,0);
 	socket().setReceiveTimeout(mTimespan);
-	NET_INFO(("tcpServer:%d new connect\n",m_IpcDeviceParams->m_commServerPort));
+	NET_INFO(("tcpServer:%d new connect this=0x%x\n",this));
 	while(1)
 	{
 		int iRet =socket().receiveBytes(&cmdLength, sizeof(cmdLength));
@@ -252,8 +254,26 @@ void DeviceServerConnection::run()
 			if(iRet==(cmdLength-4))
 			{
 				memcpy(buffer,&cmdLength,sizeof(cmdLength));
-				iRet = reloveOnePacket(socket(),buffer,cmdLength,m_IpcDeviceParams);
+				iRet = reloveOnePacket(socket(),buffer,cmdLength,m_IpcDeviceParams,mNetCmd);
 				NET_INFO(("tcpServer:%d reloveOnePacket is %d\n",m_IpcDeviceParams->m_commServerPort,iRet));
+				if(mNetCmd==NETCMD_ALARMCHAN_V30)
+				{
+					char tempString[]={0x00,0x00,0x00,0x08,0x00,0x00,0x00,0x2};
+					Timespan mTimespan(100000,0);
+					socket().setReceiveTimeout(mTimespan);
+					while(1)
+					{
+						Sleep(5000);
+						NET_INFO(("tcpServer:%d iRet %d beat send\n",m_IpcDeviceParams->m_commServerPort,iRet));
+						iRet=socket().sendBytes((char *)&tempString, sizeof(tempString),0);
+						if(iRet<=0)
+						{
+							NET_INFO(("tcpServer:%d iRet %d beat error\n",m_IpcDeviceParams->m_commServerPort,iRet));
+							socket().shutdown();
+							return;
+						}
+					}
+				}	
 			}
 			else
 			{
@@ -270,6 +290,8 @@ void DeviceServerConnection::run()
 		}
 		Sleep(100);
 	}
+	NET_INFO(("tcpServer:%d new connect over this=0x%x\n",m_IpcDeviceParams->m_commServerPort,this));
+
 }
 	
 DeviceServerConnectionFactory::DeviceServerConnectionFactory(IpcDeviceParams *ipcDeviceParams,CdevSdk * nCdevSdk)
@@ -327,16 +349,20 @@ void DeviceServer::StartCommServerThread()
 void DeviceServer::runCommServerActivity()
 {
 	g_logger.TraceInfo("commServer start:%d",m_ipcDeviceParams->m_commServerPort);
-
+	ServerSocket svs(m_ipcDeviceParams->m_commServerPort);
+	TCPServerParams* pParams = new TCPServerParams;
+	pParams->setMaxThreads(30);
+	pParams->setMaxQueued(30);
+	pParams->setThreadIdleTime(100);
 	DeviceServerConnectionFactory *ptrDeviceServerConnectionFactory=new DeviceServerConnectionFactory(m_ipcDeviceParams,m_nCdevSdk);
-	TCPServer srv(ptrDeviceServerConnectionFactory,m_ipcDeviceParams->m_commServerPort);
+	TCPServer srv(ptrDeviceServerConnectionFactory,svs,pParams);
 	srv.start();
 	while(m_commServerStart)
 	{
-		//printf("commServer %d running. totalConnections£º%d refuse :%d\n",m_commServerPort,srv.totalConnections(),srv.refusedConnections());
-		//printf("commServer %d running. maxConcurrentConnections£º%d currentConnections :%d\n",m_commServerPort,srv.maxConcurrentConnections(),srv.currentConnections());
-		//printf("commServer %d running. queuedConnections£º%d\n",m_commServerPort,srv.queuedConnections());
-		Sleep(1000);
+		//printf("commServer %d running. totalConnections£º%d refuse :%d\n",m_ipcDeviceParams->m_commServerPort,srv.totalConnections(),srv.refusedConnections());
+		//printf("commServer %d running. maxConcurrentConnections£º%d currentConnections :%d\n",m_ipcDeviceParams->m_commServerPort,srv.maxConcurrentConnections(),srv.currentConnections());
+		//printf("commServer %d running. queuedConnections£º%d\n",m_ipcDeviceParams->m_commServerPort,srv.queuedConnections());
+		Sleep(10000);
 	}
 	srv.stop();
 }

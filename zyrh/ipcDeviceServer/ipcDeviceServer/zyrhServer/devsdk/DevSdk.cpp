@@ -364,7 +364,7 @@ struct ps_system_header  {
 void CBF_OnStreamPlay(int h,int sflag,const char* data  ,unsigned int data_size,void* ctx)
 {
 	unsigned int nIndex = (unsigned int)ctx;
-	boost::shared_ptr<CdevSdk> DevPtr = CGlobalClass::GetInstance()->GetDevManager()->GetDev(nIndex);
+	CdevSdk * DevPtr = (CdevSdk *)ctx;
 	if (!DevPtr)
 	{
 		return;
@@ -382,20 +382,22 @@ CdevSdk::CdevSdk()
 	m_nAnalyzeHandle = -1;
 	m_nTimeNow = time(NULL);
 	boost::asio::io_service& _IoService = CGlobalClass::GetInstance()->GetIoservice()->get_io_service();
-	
 	m_io_timer_Ptr.reset(new boost::asio::deadline_timer(_IoService) );
 	m_pIoService = &_IoService;
+
+	boost::asio::io_service& _RtspService = CGlobalClass::GetInstance()->GetIoservice()->get_io_service();
+	m_rtsp_timer_Ptr.reset(new boost::asio::deadline_timer(_RtspService) );
+	m_pRtspService = &_RtspService;
+
 	
 	m_bStop = false;
+	//m_nServerLine=0;
 
 	m_nCheckDelTimeOut = 0;
 
 	m_stream_handle=-1;
 	m_wmp_handle=-1;
 
-	m_DeviceServer.setCdevSdkParam(m_CdevSdkParam,this);
-	m_rtspServerStart=true;
-	StartRtspServerThread();
 }
 
 CdevSdk::~CdevSdk()
@@ -406,6 +408,12 @@ CdevSdk::~CdevSdk()
 		m_io_timer_Ptr.reset();
 		 
 	}
+	if (m_rtsp_timer_Ptr)
+	{
+		m_rtsp_timer_Ptr.reset();
+
+	}
+
 	stopRtspServerThread();
 	m_DeviceServer.stop();
 }
@@ -434,6 +442,29 @@ void CdevSdk::OnTime(const boost::system::error_code& e)
 	m_io_timer_Ptr->async_wait(boost::bind(&CdevSdk::OnTime,shared_from_this(),boost::asio::placeholders::error));
 
 }
+
+void CdevSdk::RtspOnTime(const boost::system::error_code& e)
+{
+	// 	if ( e == boost::asio::error::operation_aborted)
+	// 	{
+	// 		return;
+	// 	}
+	if(m_bStop)
+	{
+		return;
+	}
+	if (!m_rtsp_timer_Ptr)
+	{
+		return;
+	}
+	if (m_watchVariable==1)
+	{
+		g_logger.TraceInfo("重启rtsp服务器");	
+		StartRtspServerThread();
+	}
+	m_rtsp_timer_Ptr->expires_from_now(boost::posix_time::seconds(5));
+	m_rtsp_timer_Ptr->async_wait(boost::bind(&CdevSdk::RtspOnTime,shared_from_this(),boost::asio::placeholders::error));
+}
 int CdevSdk::StartDev(char* sServerIp,unsigned int nServerPort,unsigned int nServerLine,char* sdevId,char* password,unsigned int nDevLine,unsigned int nchannel,int nType)
 {
 	boost::asio::detail::mutex::scoped_lock lock(mutex_Lock);
@@ -445,7 +476,6 @@ int CdevSdk::StartDev(char* sServerIp,unsigned int nServerPort,unsigned int nSer
 	m_nnchannel = nchannel;
 	m_sDevId = sdevId;
 	m_pM3u8List.m_sdveid = sdevId;
-	
 	m_wmp_handle = WMP_Create();
 	if (m_wmp_handle == -1)
 	{
@@ -462,7 +492,7 @@ int CdevSdk::StartDev(char* sServerIp,unsigned int nServerPort,unsigned int nSer
 		WMP_STREAM_MAIN, //stream_type:WMP_STREAM_MAIN 1-主码流   WMP_STREAM_SUB 2-子码流 
 		WMP_TRANS_TCP,//trans_mode:WMP_TRANS_TCP/WMP_TRANS_UDP  #define WMP_TRANS_TCP	1#define WMP_TRANS_UDP	2
 		nDevLine,//dev_line:设备线路号
-		CBF_OnStreamPlay, (void*)m_nIndex,(int*)&m_stream_handle);
+		CBF_OnStreamPlay, this,(int*)&m_stream_handle);
 	g_logger.TraceInfo("sdk取流 设备ID:%s 设备通道号:%d,设备线路号:%d,m_wmp_handle:%d,取流返回:%d ",m_sDevId.c_str(),m_nnchannel,m_nDevLine,m_wmp_handle,ret);
 	m_io_timer_Ptr->expires_from_now(boost::posix_time::seconds(5));
 	m_io_timer_Ptr->async_wait(boost::bind(&CdevSdk::OnTime,shared_from_this(),boost::asio::placeholders::error));
@@ -484,6 +514,10 @@ int CdevSdk::StartDev(CdevSdkParam cdevSdkParam)
 	m_CdevSdkParam=cdevSdkParam;
 	m_DeviceServer.setCdevSdkParam(m_CdevSdkParam,this);
 	m_DeviceServer.start();
+	StartRtspServerThread();
+	m_rtsp_timer_Ptr->expires_from_now(boost::posix_time::seconds(5));
+	m_rtsp_timer_Ptr->async_wait(boost::bind(&CdevSdk::RtspOnTime,shared_from_this(),boost::asio::placeholders::error));
+
 	return 0;
 }
 
@@ -526,7 +560,19 @@ bool CdevSdk::StartDev()
 bool CdevSdk::ReStartDev()
 {
 	boost::asio::detail::mutex::scoped_lock lock(mutex_Lock);
+	if((time(NULL) - m_rtspTime) < 10)
+	{
+		return true;
+	}
+	m_rtspTime=time(NULL);
+	int size=m_deviceSource.size();
+	for (int i=0; i<size; i++)
+	{
+		m_deviceSource[i]->clear();
+	}
 	StopPlay();
+	if(m_watchVariable==1)
+		StartRtspServerThread();
 	m_AudioBuflist.clear();
 	m_VideoBuflist.clear();
 	m_wmp_handle = WMP_Create();
@@ -545,14 +591,12 @@ bool CdevSdk::ReStartDev()
 		WMP_STREAM_MAIN, //stream_type:WMP_STREAM_MAIN 1-主码流   WMP_STREAM_SUB 2-子码流 
 		WMP_TRANS_UDP,//trans_mode:WMP_TRANS_TCP/WMP_TRANS_UDP  #define WMP_TRANS_TCP	1#define WMP_TRANS_UDP	2
 		m_nDevLine,//dev_line:设备线路号
-		CBF_OnStreamPlay, (void*)m_nIndex,(int *)&m_stream_handle);
-	//g_logger.TraceInfo("sdk重新取流 设备ID:%s 设备通道号:%d,设备线路号:%d,m_wmp_handle:%d,取流返回:%d ",m_sDevId.c_str(),m_nnchannel,m_nDevLine,m_wmp_handle,ret);
-
+		CBF_OnStreamPlay, this,(int *)&m_stream_handle);
+	g_logger.TraceInfo("sdk 控制端口:%d rtsp服务端口:%d 重新取流 设备ID:%s 设备通道号:%d,设备线路号:%d,m_wmp_handle:%d,取流返回:%d ",m_CdevSdkParam.m_CdevChannelDeviceParam.m_nPlatDevPort,m_CdevSdkParam.m_CdevChannelDeviceParam.m_nRtspServerStartPort,m_sDevId.c_str(),m_nnchannel,m_nDevLine,m_wmp_handle,ret);
 	if (ret != 0)
 	{
-		StopPlay();
 		return false;
-	}
+	}	
 	return true;
 }
 void CdevSdk::ResetParam()
@@ -583,6 +627,10 @@ void CdevSdk::StopDev()
 	if (m_io_timer_Ptr)
 	{
 		m_io_timer_Ptr->cancel();
+	}
+	if (m_rtsp_timer_Ptr)
+	{
+		m_rtsp_timer_Ptr->cancel();
 	}
 	if (m_wmp_handle != -1)
 	{
@@ -661,6 +709,7 @@ void CdevSdk::StopPlay()
 		g_logger.TraceInfo("停止解包 m_nAnalyzeHandle %d devid:%s",m_nAnalyzeHandle,m_sDevId.c_str());
 		m_nAnalyzeHandle = -1;
 	}
+	g_logger.TraceInfo("关闭设备 m_nAnalyzeHandle %d devid:%s",m_nAnalyzeHandle,m_sDevId.c_str());
 
 }
 bool CdevSdk::addDeviceSource(std::vector<std::string > *vDeviceSource)
@@ -703,15 +752,18 @@ bool CdevSdk::GetVideoData(std::vector<std::string > *vDeviceSource,unsigned cha
 	if(bFindFlag)
 	{
 		unsigned int timeOut=0;
-		do
+		if(vDeviceSource->empty())
 		{
-			Sleep(10);
-			timeOut++;
-			if(timeOut>300)
-				break;
-			bFindFlag=vDeviceSource->empty();
+			do
+			{
+				Sleep(40);
+				timeOut++;
+				if(timeOut>75)
+					break;
+				bFindFlag=vDeviceSource->empty();
+			}
+			while(bFindFlag);
 		}
-		while(bFindFlag);
 		boost::asio::detail::mutex::scoped_lock lock(mutex_HandleVideo);
 		if(!vDeviceSource->empty())
 		{
@@ -740,7 +792,7 @@ bool CdevSdk::GetVideoData(std::vector<std::string > *vDeviceSource,unsigned cha
 			}
 			else
 				return false;
-			
+
 		}
 		else
 		{
@@ -841,7 +893,6 @@ void CdevSdk::handleEncoder()
 			unsigned int nWidth = m_pffmpegEncoder->m_nWidth;
 			unsigned int nHigth = m_pffmpegEncoder->m_nHegint;
 			AVFrame *pframe = m_pffmpegEncoder->m_frame;
-
 			int nSize = videoBufinPtr->d_cur;
 			char* pBuf = (char*)videoBufinPtr->data;
 			int nNum = nWidth*nHigth;
@@ -855,14 +906,12 @@ void CdevSdk::handleEncoder()
 				m_nTimeNow = time(NULL);
 				handleVideo(outH264Buf.data,outH264Buf.d_cur, videoBufinPtr->TimeStamp,bkey);
 			}
-
 		}
-
 	}
 	static int nTime = time(NULL);
 	if (time(NULL) > nTime + 5 )
 	{
-		g_logger.TraceInfo("handleEncoder video data");
+		//g_logger.TraceInfo("handleEncoder video data");
 		nTime = time(NULL);
 	}
 	if (m_VideoBuflist.GetSize() > 50)
@@ -905,21 +954,26 @@ void CdevSdk::handleAudioAac(uint8_t* aacbuf,uint32_t bufsize,__int64 timeStamp,
 }
 void CdevSdk::handleVideo(uint8_t* vidoebuf,uint32_t bufsize,__int64 TimeStamp,bool bkey)
 {
-	unsigned int getVideoFlag=0;
+	unsigned int getVideoFlag=1;
 	unsigned int i=0,size=0;
 	boost::asio::detail::mutex::scoped_lock lock(mutex_HandleVideo);
+	m_rtspTime=time(NULL);
 	std::string temp((char *)vidoebuf,bufsize);
 	size=m_deviceSource.size();
 	for (i=0; i<size; i++)
 	{
-		//if(m_deviceSource[i]->size()<200)
+		if(m_deviceSource[i]->size()<200)
 		{
 			m_deviceSource[i]->push_back(temp);
-			getVideoFlag=1;
-			//printf("this 0x%x,insert data size is %d   stask %d\n",this,temp.length(),m_deviceSource[i]->size());
+			getVideoFlag=0;
+		}
+		else
+		{
+			g_logger.TraceInfo("this 0x%x,insert data size is %d stask %d\n",this,temp.length(),m_deviceSource[i]->size());
+			m_deviceSource[i]->clear();
 		}
 	}
-	if(getVideoFlag==0)
+	if(getVideoFlag==1)
 		StopPlay();
 	//m_pM3u8List.handleVideo(vidoebuf,bufsize,TimeStamp,bkey);
 	//if(m_nType&0x01)
@@ -1056,10 +1110,13 @@ bool CdevSdk::Ps_AnalyzeDataGetPacketEx()
 
 void CdevSdk::StartRtspServerThread()
 {
+	m_watchVariable=0;
+	m_rtspServerStart=true;
 	m_rtspServerThread.StartThread(boost::bind(&CdevSdk::runRtspServerActivity,this));
 }
 void CdevSdk::stopRtspServerThread()
 {
+	m_watchVariable=1;
 	m_rtspServerStart=false;
 	m_rtspServerThread.StopThread();
 }
@@ -1096,7 +1153,7 @@ int CdevSdk::startRtspServer()
 		}
 		else
 			break;
-		Sleep(2000);
+		Sleep(1000);
 	}
 	m_DeviceServer.setCdevSdkParam(m_CdevSdkParam,this);
 	char const* descriptionString= "Session streamed by \"testOnDemandRTSPServer\"";
@@ -1108,21 +1165,23 @@ int CdevSdk::startRtspServer()
 	announceStream(rtspServer, sms, streamName);//提示用户输入连接信息
 	try
 	{		
-		env->taskScheduler().doEventLoop(); //循环等待连接
+		env->taskScheduler().doEventLoop(&m_watchVariable); //循环等待连接
 	}
 	catch(...)
 	{
-		g_logger.TraceInfo("CException--\n");
+		g_logger.TraceInfo("env->taskScheduler().doEventLoop is %s\n",env->getResultMsg());
 	}
-	free(rtspServer);
+	g_logger.TraceInfo("tcpserver:%d rtspServer:%d is stop--\n",m_CdevSdkParam.m_CdevChannelDeviceParam.m_nPlatDevPort,m_CdevSdkParam.m_CdevChannelDeviceParam.m_nRtspServerStartPort);
+	rtspServer->removeServerMediaSession(sms);  
+    Medium::close(rtspServer);  
+    env->reclaim();  
+    delete scheduler; 
 	return 0;
 }
 
 void CdevSdk::runRtspServerActivity()
 {
-	while(m_rtspServerStart)
-	{
-		startRtspServer();
-		Sleep(5000);
-	}
+	m_watchVariable=0;
+	startRtspServer();
+	m_watchVariable=1;
 }

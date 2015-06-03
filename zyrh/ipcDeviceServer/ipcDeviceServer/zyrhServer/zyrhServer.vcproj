@@ -65,7 +65,7 @@
 				OutputFile="$(OutDir)\wmp-plServer.exe"
 				LinkIncremental="2"
 				GenerateDebugInformation="true"
-				SubSystem="2"
+				SubSystem="1"
 				TargetMachine="1"
 			/>
 			<Tool
@@ -891,78 +891,6 @@
 				RelativePath=".\Logger.h"
 				>
 			</File>
-			<Filter
-				Name="json"
-				>
-				<File
-					RelativePath=".\json\autolink.h"
-					>
-				</File>
-				<File
-					RelativePath=".\json\config.h"
-					>
-				</File>
-				<File
-					RelativePath=".\json\features.h"
-					>
-				</File>
-				<File
-					RelativePath=".\json\forwards.h"
-					>
-				</File>
-				<File
-					RelativePath=".\json\json.cpp"
-					>
-				</File>
-				<File
-					RelativePath=".\json\json.h"
-					>
-				</File>
-				<File
-					RelativePath=".\json\json_batchallocator.h"
-					>
-				</File>
-				<File
-					RelativePath=".\json\json_internalarray.inl"
-					>
-				</File>
-				<File
-					RelativePath=".\json\json_internalmap.inl"
-					>
-				</File>
-				<File
-					RelativePath=".\json\json_reader.cpp"
-					>
-				</File>
-				<File
-					RelativePath=".\json\json_value.cpp"
-					>
-				</File>
-				<File
-					RelativePath=".\json\json_valueiterator.inl"
-					>
-				</File>
-				<File
-					RelativePath=".\json\json_writer.cpp"
-					>
-				</File>
-				<File
-					RelativePath=".\json\reader.h"
-					>
-				</File>
-				<File
-					RelativePath=".\json\sconscript"
-					>
-				</File>
-				<File
-					RelativePath=".\json\value.h"
-					>
-				</File>
-				<File
-					RelativePath=".\json\writer.h"
-					>
-				</File>
-			</Filter>
 		</Filter>
 		<Filter
 			Name="thread"
@@ -1251,6 +1179,78 @@
 					>
 				</File>
 			</Filter>
+		</Filter>
+		<Filter
+			Name="json"
+			>
+			<File
+				RelativePath=".\json\autolink.h"
+				>
+			</File>
+			<File
+				RelativePath=".\json\config.h"
+				>
+			</File>
+			<File
+				RelativePath=".\json\features.h"
+				>
+			</File>
+			<File
+				RelativePath=".\json\forwards.h"
+				>
+			</File>
+			<File
+				RelativePath=".\json\json.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\json\json.h"
+				>
+			</File>
+			<File
+				RelativePath=".\json\json_batchallocator.h"
+				>
+			</File>
+			<File
+				RelativePath=".\json\json_internalarray.inl"
+				>
+			</File>
+			<File
+				RelativePath=".\json\json_internalmap.inl"
+				>
+			</File>
+			<File
+				RelativePath=".\json\json_reader.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\json\json_value.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\json\json_valueiterator.inl"
+				>
+			</File>
+			<File
+				RelativePath=".\json\json_writer.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\json\reader.h"
+				>
+			</File>
+			<File
+				RelativePath=".\json\sconscript"
+				>
+			</File>
+			<File
+				RelativePath=".\json\value.h"
+				>
+			</File>
+			<File
+				RelativePath=".\json\writer.h"
+				>
+			</File>
 		</Filter>
 		<File
 			RelativePath=".\ReadMe.txt"

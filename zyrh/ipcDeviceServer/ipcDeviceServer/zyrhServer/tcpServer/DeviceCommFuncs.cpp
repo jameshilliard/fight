@@ -2821,8 +2821,9 @@ STATUS netClientGetOSDCfgV30(StreamSocket  &connfd, char *recvbuff, struct socka
 		0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
 		0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
 	};
+	return connfd.sendBytes(tempString,sizeof(tempString),0);
+	#if 0
 	int sendlen=sizeof(netRetOSDCfg);
-	
 	NET_OSD_CFG *pOsdCfg;
 	memcpy((char *)&netGetChanCfg, recvbuff, sizeof(NETCMD_CHAN_HEADER));
 	sendlen = sizeof(netRetOSDCfg);
@@ -2834,5 +2835,6 @@ STATUS netClientGetOSDCfgV30(StreamSocket  &connfd, char *recvbuff, struct socka
 	
 	//memcpy((char *)&netRetOSDCfg,tempString,sizeof(tempString));
 	return connfd.sendBytes((char *)&netRetOSDCfg, sendlen,0);
+	#endif
 }
 #endif
