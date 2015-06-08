@@ -104,7 +104,11 @@ int concovtPtzData(NET_PTZ_CTRL_DATA netPTZCtrlData,ptzControl *mptzControl)
 	mptzControl->param=netPTZCtrlData.presetNo;
 	return 0;
 }
-	
+
+const char string_GET_VIDEOEFFECT[]={0x00,0x00,0x00,0x14,0x00,0x00,0x02,0x1,0x00,0x00,0x00,0x1,0x00,0x00,0x00,0x0,0x80,0x80,0x80,0x80};
+const char string_DEFAULT[]={0x00,0x00,0x00,0x10,0x00,0x00,0x00,0x1,0x00,0x00,0x00,0x1,0x00,0x00,0x00,0x0};
+const char string_IPCORECFG_V31[]={0x00,0x00,0x00,0x10,0x00,0x00,0x00,0xd,0x00,0x00,0x00,0xd,0x00,0x00,0x00,0x0};
+
 STATUS DeviceServerConnection::reloveOnePacket(StreamSocket  &connfd,char *recvbuff,UINT32 bufferSize,void *param,UINT32 &mNetCmd)
 {
 	NETCMD_HEADER netCmdHeader;
@@ -112,7 +116,7 @@ STATUS DeviceServerConnection::reloveOnePacket(StreamSocket  &connfd,char *recvb
 	INT32  retVal=-1;
 	NET_PTZ_CTRL_DATA netPTZCtrlData;
 	std::string ptzString="control ptz with speed";
-	struct sockaddr_in  clientSockAddr, *pClientSockAddr;
+	struct sockaddr_in  clientSockAddr, *pClientSockAddr=NULL;
 	memcpy((char *)&netCmdHeader, recvbuff, sizeof(NETCMD_HEADER));
 	netCmdHeader.netCmd = ntohl(netCmdHeader.netCmd);
 	IpcDeviceParams *ptrIpcDeviceParams=(IpcDeviceParams *)param;
@@ -149,7 +153,7 @@ STATUS DeviceServerConnection::reloveOnePacket(StreamSocket  &connfd,char *recvb
 		break;
 	case NETCMD_GET_IPCORECFG_V31:        /*get IPC core config param, supports domain name*/
 		NET_INFO(("NETCMD_GET_IPCORECFG_V31.\n"));
-		//retVal = netClientGetIpCoreCfgV31(connfd, recvbuff, pClientSockAddr);
+		retVal=connfd.sendBytes((char *)&string_IPCORECFG_V31, sizeof(string_IPCORECFG_V31),0);
 		break;
 	case NETCMD_GET_NETCFG_V30:	    	/*get network config param*/	
 		NET_INFO(("NETCMD_GET_NETCFG_V30.\n"));
@@ -221,10 +225,13 @@ STATUS DeviceServerConnection::reloveOnePacket(StreamSocket  &connfd,char *recvb
 		NET_INFO(("NETCMD_SET_TIMECFG.\n"));
 		retVal = netClientSetDevTime(connfd, recvbuff, pClientSockAddr);
 		break;
+	case NETCMD_GET_VIDEOEFFECT:
+		NET_INFO(("NETCMD_GET_VIDEOEFFECT\n"));
+		retVal=connfd.sendBytes((char *)&string_GET_VIDEOEFFECT, sizeof(string_GET_VIDEOEFFECT),0);
+		break;
 	default:
 		NET_INFO(("no support cmd. 0x%x\n",netCmdHeader.netCmd));
-		char tempString[]={0x00,0x00,0x00,0x10,0x00,0x00,0x00,0x1,0x00,0x00,0x00,0x1,0x00,0x00,0x00,0x0};
-		retVal=connfd.sendBytes((char *)&tempString, sizeof(tempString),0);
+		retVal=connfd.sendBytes((char *)&string_DEFAULT, sizeof(string_DEFAULT),0);
 		break;
 	}		
 	return retVal;
@@ -351,8 +358,8 @@ void DeviceServer::runCommServerActivity()
 	g_logger.TraceInfo("commServer start:%d",m_ipcDeviceParams->m_commServerPort);
 	ServerSocket svs(m_ipcDeviceParams->m_commServerPort);
 	TCPServerParams* pParams = new TCPServerParams;
-	pParams->setMaxThreads(30);
-	pParams->setMaxQueued(30);
+	pParams->setMaxThreads(50);
+	pParams->setMaxQueued(50);
 	pParams->setThreadIdleTime(100);
 	DeviceServerConnectionFactory *ptrDeviceServerConnectionFactory=new DeviceServerConnectionFactory(m_ipcDeviceParams,m_nCdevSdk);
 	TCPServer srv(ptrDeviceServerConnectionFactory,svs,pParams);

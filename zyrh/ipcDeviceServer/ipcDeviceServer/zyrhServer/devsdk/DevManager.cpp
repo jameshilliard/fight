@@ -288,7 +288,7 @@ void CDevManager::StartUpateDeviceInfo()
 		if(!strRet.empty())
 		{
 			decodeDeviceInfo(strRet,sCdevSdkParam);	
-			Sleep(60000);
+			Sleep(6000);
 		}
 		else
 		{

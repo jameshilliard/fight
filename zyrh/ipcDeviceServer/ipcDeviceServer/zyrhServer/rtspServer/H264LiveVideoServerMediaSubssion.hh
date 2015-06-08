@@ -30,6 +30,7 @@ protected: // we're a virtual base class
 
 protected: // redefined virtual functions
 	FramedSource* createNewStreamSource(unsigned clientSessionId,unsigned& estBitrate);
+	//virtual char const* sdpLines(); 
 public:
 	CdevSdk *m_ptCdevSdk;
 	char fFileName[256];

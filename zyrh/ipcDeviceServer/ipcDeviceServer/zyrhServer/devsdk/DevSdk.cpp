@@ -9,6 +9,7 @@
 
 #include "liveMedia.hh"
 #include "BasicUsageEnvironment.hh"
+#include "GroupsockHelper.hh"
 #include "../rtspServer/H264LiveVideoServerMediaSubssion.hh"
 #include "../rtspServer/H264FramedLiveSource.hh"
 
@@ -1136,6 +1137,11 @@ int CdevSdk::startRtspServer()
 		return -1;
 	//设置环境
 	UsageEnvironment* env;
+	//NetAddressList addresses("192.168.1.43");
+	//if (addresses.numAddresses() != 0) {
+	//	SendingInterfaceAddr = *(unsigned*)(addresses.firstAddress()->data());
+	//	ReceivingInterfaceAddr = *(unsigned*)(addresses.firstAddress()->data());
+	//}
 	OutPacketBuffer::maxSize = 1000000; // allow for some possibly large H.264 frames
 	Boolean reuseFirstSource = False;//如果为“true”则其他接入的客户端跟第一个客户端看到一样的视频流，否则其他客户端接入的时候将重新播放
 	TaskScheduler* scheduler = BasicTaskScheduler::createNew();
@@ -1143,6 +1149,8 @@ int CdevSdk::startRtspServer()
 
 	//创建RTSP服务器
 	UserAuthenticationDatabase* authDB = NULL;
+	//authDB = new UserAuthenticationDatabase;
+	//authDB->addUserRecord("admin", "12345"); // replace these with real strings
 	RTSPServer* rtspServer=NULL;
 	while(1)
 	{
@@ -1156,13 +1164,17 @@ int CdevSdk::startRtspServer()
 		Sleep(1000);
 	}
 	m_DeviceServer.setCdevSdkParam(m_CdevSdkParam,this);
-	char const* descriptionString= "Session streamed by \"testOnDemandRTSPServer\"";
-	//上面的部分除了模拟网络传输的部分外其他的基本跟live555提供的demo一样，而下面则修改为网络传输的形式，为此重写addSubsession的第一个参数相关文件
+	char const* descriptionString= "Media Presentation";
 	char const* streamName = "ch1/main/av_stream";
-	ServerMediaSession* sms = ServerMediaSession::createNew(*env, streamName, streamName,descriptionString);
+	ServerMediaSession* sms = ServerMediaSession::createNew(*env, streamName, NULL,descriptionString,False);
+	char const* streamNameClientDemo = "mpeg4/ch01/main/av_stream";
+	ServerMediaSession* smsClientDemo = ServerMediaSession::createNew(*env, streamNameClientDemo, NULL,descriptionString,False);
 	sms->addSubsession(H264LiveVideoServerMediaSubssion::createNew(*env, reuseFirstSource,this));//修改为自己实现的H264LiveVideoServerMediaSubssion
+	smsClientDemo->addSubsession(H264LiveVideoServerMediaSubssion::createNew(*env, reuseFirstSource,this));//修改为自己实现的H264LiveVideoServerMediaSubssion
 	rtspServer->addServerMediaSession(sms);
+	rtspServer->addServerMediaSession(smsClientDemo);
 	announceStream(rtspServer, sms, streamName);//提示用户输入连接信息
+	announceStream(rtspServer, smsClientDemo, streamNameClientDemo);//提示用户输入连接信息
 	try
 	{		
 		env->taskScheduler().doEventLoop(&m_watchVariable); //循环等待连接
@@ -1173,6 +1185,7 @@ int CdevSdk::startRtspServer()
 	}
 	g_logger.TraceInfo("tcpserver:%d rtspServer:%d is stop--\n",m_CdevSdkParam.m_CdevChannelDeviceParam.m_nPlatDevPort,m_CdevSdkParam.m_CdevChannelDeviceParam.m_nRtspServerStartPort);
 	rtspServer->removeServerMediaSession(sms);  
+	rtspServer->removeServerMediaSession(smsClientDemo); 
     Medium::close(rtspServer);  
     env->reclaim();  
     delete scheduler; 
