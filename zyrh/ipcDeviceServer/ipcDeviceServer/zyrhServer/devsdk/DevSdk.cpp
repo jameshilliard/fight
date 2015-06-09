@@ -514,6 +514,8 @@ int CdevSdk::StartDev(CdevSdkParam cdevSdkParam)
 
 	m_CdevSdkParam=cdevSdkParam;
 	m_DeviceServer.setCdevSdkParam(m_CdevSdkParam,this);
+	m_DeviceServer.stop();
+	Sleep(100);
 	m_DeviceServer.start();
 	StartRtspServerThread();
 	m_rtsp_timer_Ptr->expires_from_now(boost::posix_time::seconds(5));
@@ -521,6 +523,7 @@ int CdevSdk::StartDev(CdevSdkParam cdevSdkParam)
 
 	return 0;
 }
+
 
 bool CdevSdk::StartDev()
 {
@@ -561,12 +564,12 @@ bool CdevSdk::StartDev()
 bool CdevSdk::ReStartDev()
 {
 	boost::asio::detail::mutex::scoped_lock lock(mutex_Lock);
-	if((time(NULL) - m_rtspTime) < 10)
-	{
-		return true;
-	}
-	m_rtspTime=time(NULL);
 	int size=m_deviceSource.size();
+	//if((time(NULL) - m_rtspTime) < 5 && m_rtspTime!=0)
+	//{
+	//	return true;
+	//}
+	m_rtspTime=time(NULL);
 	for (int i=0; i<size; i++)
 	{
 		m_deviceSource[i]->clear();
@@ -581,11 +584,13 @@ bool CdevSdk::ReStartDev()
 	{
 		return false;
 	}
+	g_logger.TraceInfo("sdk");
 	int ret =  WMP_Login(m_wmp_handle,m_sServerIp.c_str(),m_nServerPort, m_sDevId.c_str(),m_spassword.c_str(),m_nServerLine);
 	if (ret == -1)
 	{
 		return false;
 	}
+	g_logger.TraceInfo("sdk2");
 	ret = WMP_Play(m_wmp_handle,
 		m_sDevId.c_str(),//devid:设备ID
 		m_nnchannel,//channel:设备通道号
@@ -594,6 +599,7 @@ bool CdevSdk::ReStartDev()
 		m_nDevLine,//dev_line:设备线路号
 		CBF_OnStreamPlay, this,(int *)&m_stream_handle);
 	g_logger.TraceInfo("sdk 控制端口:%d rtsp服务端口:%d 重新取流 设备ID:%s 设备通道号:%d,设备线路号:%d,m_wmp_handle:%d,取流返回:%d ",m_CdevSdkParam.m_CdevChannelDeviceParam.m_nPlatDevPort,m_CdevSdkParam.m_CdevChannelDeviceParam.m_nRtspServerStartPort,m_sDevId.c_str(),m_nnchannel,m_nDevLine,m_wmp_handle,ret);
+		
 	if (ret != 0)
 	{
 		return false;
@@ -752,25 +758,29 @@ bool CdevSdk::GetVideoData(std::vector<std::string > *vDeviceSource,unsigned cha
 	}
 	if(bFindFlag)
 	{
+#if 0
 		unsigned int timeOut=0;
 		if(vDeviceSource->empty())
 		{
+			g_logger.TraceInfo("start %d",vDeviceSource->size());
 			do
 			{
-				Sleep(40);
+				Sleep(100);
 				timeOut++;
-				if(timeOut>75)
+				if(timeOut>3)
 					break;
 				bFindFlag=vDeviceSource->empty();
 			}
 			while(bFindFlag);
+			g_logger.TraceInfo("over %d",vDeviceSource->size());
 		}
+#endif
 		boost::asio::detail::mutex::scoped_lock lock(mutex_HandleVideo);
 		if(!vDeviceSource->empty())
 		{
 			std::vector<std::string >::iterator it=vDeviceSource->begin();
 			frameSize=it->length();
-			//printf("this time:%d,this 0x%x,fFrameSize 1 is %d--%d-%d-\n",GetTickCount(),this,frameSize,curVideoIndex,dataMaxSize);
+			printf("this time:%d,this 0x%x,fFrameSize 1 is %d--%d-%d-\n",GetTickCount(),this,frameSize,curVideoIndex,dataMaxSize);
 			if(curVideoIndex!=0)
 			{	
 				frameSize=frameSize-curVideoIndex;

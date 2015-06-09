@@ -43,8 +43,10 @@ void CThread::StopThread()
 	{
 		WaitForSingleObject( m_ThreadHandle, INFINITE ); 
 		CloseHandle(m_ThreadHandle);
-		m_ThreadHandle = INVALID_HANDLE_VALUE;
+		m_ThreadHandle = INVALID_HANDLE_VALUE;	
 	}
+	m_ThreadHandle = INVALID_HANDLE_VALUE;//zss++
+	m_ThreadStatur=THREAD_INVALIAD;//zss++
 }
 void CThread::DoThreadProc()
 {

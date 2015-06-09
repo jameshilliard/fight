@@ -369,9 +369,10 @@ void DeviceServer::runCommServerActivity()
 		//printf("commServer %d running. totalConnections£º%d refuse :%d\n",m_ipcDeviceParams->m_commServerPort,srv.totalConnections(),srv.refusedConnections());
 		//printf("commServer %d running. maxConcurrentConnections£º%d currentConnections :%d\n",m_ipcDeviceParams->m_commServerPort,srv.maxConcurrentConnections(),srv.currentConnections());
 		//printf("commServer %d running. queuedConnections£º%d\n",m_ipcDeviceParams->m_commServerPort,srv.queuedConnections());
-		Sleep(10000);
+		Sleep(1000);
 	}
 	srv.stop();
+	g_logger.TraceInfo("commServer over:%d",m_ipcDeviceParams->m_commServerPort);
 }
 
 
