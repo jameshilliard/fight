@@ -246,6 +246,12 @@ void CDevManager::StartUpateDeviceInfo()
 	str = buf;
 
 	CdevSdkParam sCdevSdkParam;
+	GetPrivateProfileString("ZyrhOpenService","LocalIpaddr","",buf,2048,m_configPath.c_str());
+	sCdevSdkParam.m_CdevChannelDeviceParam.m_sLocalIpaddr = buf;
+
+	GetPrivateProfileString("ZyrhOpenService","LocalIpaddr","",buf,2048,m_configPath.c_str());
+	sCdevSdkParam.m_beatEnable = atoi(buf);
+	
 	for (int i = 1;i<=6;i++)
 	{
 		strseparate((char*)str.c_str(),str1,str2,"_");

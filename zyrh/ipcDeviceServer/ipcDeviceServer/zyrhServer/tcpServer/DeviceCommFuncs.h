@@ -26,6 +26,7 @@ typedef struct {
 	std::string 			m_secret;    
 	std::string 			m_sDevId;
 	unsigned int 			m_nnchannel;
+	std::string 			m_sLocalIpaddr;
 	struct ptzControl		m_ptzControl;
 } IpcDeviceParams;
 

@@ -333,7 +333,7 @@ void DeviceServer::setCdevSdkParam(CdevSdkParam sCdevSdkParam,CdevSdk *mCdevSdk)
 	m_ipcDeviceParams->m_secret=sCdevSdkParam.m_CdevChannelDeviceParam.m_sPlatDevPwd;
 	m_ipcDeviceParams->m_sDevId=sCdevSdkParam.m_sDevId;
 	m_ipcDeviceParams->m_nnchannel=sCdevSdkParam.m_CdevChannelDeviceParam.m_nChannelNo;
-
+	m_ipcDeviceParams->m_sLocalIpaddr=sCdevSdkParam.m_CdevChannelDeviceParam.m_sLocalIpaddr;
 }
 
 void DeviceServer::start()
@@ -355,8 +355,20 @@ void DeviceServer::StartCommServerThread()
 
 void DeviceServer::runCommServerActivity()
 {
-	g_logger.TraceInfo("commServer start:%d",m_ipcDeviceParams->m_commServerPort);
-	ServerSocket svs(m_ipcDeviceParams->m_commServerPort);
+	g_logger.TraceInfo("commServer start:%s:%d",m_ipcDeviceParams->m_sLocalIpaddr.c_str(),m_ipcDeviceParams->m_commServerPort);
+	SocketAddress mSocketAddress;
+	if(m_ipcDeviceParams->m_sLocalIpaddr!="")
+	{
+		SocketAddress tSocketAddress(m_ipcDeviceParams->m_sLocalIpaddr,m_ipcDeviceParams->m_commServerPort);
+		mSocketAddress=tSocketAddress;
+	}
+	else
+	{
+		SocketAddress tSocketAddress(m_ipcDeviceParams->m_commServerPort);
+		mSocketAddress=tSocketAddress;
+
+	}
+	ServerSocket svs(mSocketAddress);
 	TCPServerParams* pParams = new TCPServerParams;
 	pParams->setMaxThreads(50);
 	pParams->setMaxQueued(50);
@@ -372,7 +384,7 @@ void DeviceServer::runCommServerActivity()
 		Sleep(1000);
 	}
 	srv.stop();
-	g_logger.TraceInfo("commServer over:%d",m_ipcDeviceParams->m_commServerPort);
+	g_logger.TraceInfo("commServer over:%s:%d",m_ipcDeviceParams->m_sLocalIpaddr.c_str(),m_ipcDeviceParams->m_commServerPort);
 }
 
 

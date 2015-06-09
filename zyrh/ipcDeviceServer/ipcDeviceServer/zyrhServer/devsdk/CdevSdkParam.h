@@ -12,6 +12,7 @@ public:
 		m_nStreamType=0;
 		m_sPlatDevName="";
 		m_sPlatDevPwd="";
+		m_sLocalIpaddr="";
 		m_nPlatDevPort=0;
 		m_nRtspServerStartPort=0;
 		m_nRtspServerStopPort=0;
@@ -36,6 +37,7 @@ public:
 		return true;
 	}
 	unsigned int m_nChannelNo;
+	std::string  m_sLocalIpaddr;
 	std::string  m_sChannelName;
 	unsigned int m_nConnectType;
 	unsigned int m_nStreamType;
@@ -62,6 +64,7 @@ public:
 		m_devNo=0;
 		m_sDevId="";
 
+		m_beatEnable=0;
 		m_nChannelQuantity=0;
 		m_nAudioType=0;
 		m_nLimitedPreviewTime=0;
@@ -113,6 +116,7 @@ public:
 	unsigned int    m_nChannelQuantity;
 	unsigned int    m_nAudioType;
 	unsigned int    m_nLimitedPreviewTime;
+	unsigned int 	m_beatEnable;
 
 	CdevChannelDeviceParam m_CdevChannelDeviceParam;
 };

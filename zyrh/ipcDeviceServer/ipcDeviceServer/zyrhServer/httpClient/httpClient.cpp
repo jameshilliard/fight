@@ -224,6 +224,7 @@ bool CHTTPClient::HttpPost(const std::string & strUrl,char* buf,int length,std::
 			message += c1[0];
 		}
 	}
+	Sleep(100);
 	length = atoi(_ResonseHead["Content-Length"].c_str());
 	vcResponse.clear();	
 	if (length > 0)

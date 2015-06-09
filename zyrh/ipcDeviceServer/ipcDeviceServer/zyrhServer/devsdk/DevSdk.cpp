@@ -758,11 +758,10 @@ bool CdevSdk::GetVideoData(std::vector<std::string > *vDeviceSource,unsigned cha
 	}
 	if(bFindFlag)
 	{
-#if 0
 		unsigned int timeOut=0;
 		if(vDeviceSource->empty())
 		{
-			g_logger.TraceInfo("start %d",vDeviceSource->size());
+			//g_logger.TraceInfo("start %d",vDeviceSource->size());
 			do
 			{
 				Sleep(100);
@@ -772,15 +771,14 @@ bool CdevSdk::GetVideoData(std::vector<std::string > *vDeviceSource,unsigned cha
 				bFindFlag=vDeviceSource->empty();
 			}
 			while(bFindFlag);
-			g_logger.TraceInfo("over %d",vDeviceSource->size());
+			//g_logger.TraceInfo("over %d",vDeviceSource->size());
 		}
-#endif
 		boost::asio::detail::mutex::scoped_lock lock(mutex_HandleVideo);
 		if(!vDeviceSource->empty())
 		{
 			std::vector<std::string >::iterator it=vDeviceSource->begin();
 			frameSize=it->length();
-			printf("this time:%d,this 0x%x,fFrameSize 1 is %d--%d-%d-\n",GetTickCount(),this,frameSize,curVideoIndex,dataMaxSize);
+			//printf("this time:%d,this 0x%x,fFrameSize 1 is %d--%d-%d-\n",GetTickCount(),this,frameSize,curVideoIndex,dataMaxSize);
 			if(curVideoIndex!=0)
 			{	
 				frameSize=frameSize-curVideoIndex;
@@ -1147,11 +1145,14 @@ int CdevSdk::startRtspServer()
 		return -1;
 	//设置环境
 	UsageEnvironment* env;
-	//NetAddressList addresses("192.168.1.43");
-	//if (addresses.numAddresses() != 0) {
-	//	SendingInterfaceAddr = *(unsigned*)(addresses.firstAddress()->data());
-	//	ReceivingInterfaceAddr = *(unsigned*)(addresses.firstAddress()->data());
-	//}
+	if(m_CdevSdkParam.m_CdevChannelDeviceParam.m_sLocalIpaddr!="")
+	{
+		NetAddressList addresses(m_CdevSdkParam.m_CdevChannelDeviceParam.m_sLocalIpaddr.c_str());
+		if (addresses.numAddresses() != 0) {
+			SendingInterfaceAddr = *(unsigned*)(addresses.firstAddress()->data());
+			ReceivingInterfaceAddr = *(unsigned*)(addresses.firstAddress()->data());
+		}
+	}
 	OutPacketBuffer::maxSize = 1000000; // allow for some possibly large H.264 frames
 	Boolean reuseFirstSource = False;//如果为“true”则其他接入的客户端跟第一个客户端看到一样的视频流，否则其他客户端接入的时候将重新播放
 	TaskScheduler* scheduler = BasicTaskScheduler::createNew();
