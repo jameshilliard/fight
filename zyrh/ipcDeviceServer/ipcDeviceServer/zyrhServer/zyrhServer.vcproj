@@ -48,6 +48,7 @@
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
 				UsePrecompiledHeader="0"
+				AssemblerOutput="2"
 				WarningLevel="3"
 				DebugInformationFormat="3"
 			/>
@@ -65,6 +66,7 @@
 				OutputFile="$(OutDir)\wmp-plServer.exe"
 				LinkIncremental="2"
 				GenerateDebugInformation="true"
+				GenerateMapFile="true"
 				SubSystem="1"
 				TargetMachine="1"
 			/>
@@ -881,18 +883,6 @@
 			</File>
 		</Filter>
 		<Filter
-			Name="log"
-			>
-			<File
-				RelativePath=".\Logger.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Logger.h"
-				>
-			</File>
-		</Filter>
-		<Filter
 			Name="thread"
 			>
 			<File
@@ -1249,6 +1239,18 @@
 			</File>
 			<File
 				RelativePath=".\json\writer.h"
+				>
+			</File>
+		</Filter>
+		<Filter
+			Name="log"
+			>
+			<File
+				RelativePath=".\Logger.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Logger.h"
 				>
 			</File>
 		</Filter>

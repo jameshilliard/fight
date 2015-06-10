@@ -814,6 +814,79 @@ bool CdevSdk::GetVideoData(std::vector<std::string > *vDeviceSource,unsigned cha
 	
 }
 
+
+#if 0
+bool CdevSdk::GetVideoData(std::vector<std::string > *vDeviceSource,unsigned char *fTo,unsigned int &fFrameSize,unsigned int fMaxSize,unsigned int &fNumTruncatedBytes)
+{
+	if(vDeviceSource==NULL)
+	{
+		fFrameSize =0;
+		fNumTruncatedBytes=0;
+		return false;
+	}
+	unsigned int i=0;
+	fFrameSize=0;
+	fNumTruncatedBytes=0;
+	bool bFindFlag=false;
+	{
+		boost::asio::detail::mutex::scoped_lock lock(mutex_HandleVideo);
+		for (i=0; i<m_deviceSource.size(); i++)
+		{
+			if(m_deviceSource[i]==vDeviceSource)
+			{
+				bFindFlag=true;
+			}
+		}
+	}
+	if(bFindFlag)
+	{
+		unsigned int timeOut=0;
+		if(vDeviceSource->empty())
+		{
+			do
+			{
+				Sleep(100);
+				timeOut++;
+				if(timeOut>3)
+					break;
+				bFindFlag=vDeviceSource->empty();
+			}
+			while(bFindFlag);
+		}
+		if(!vDeviceSource->empty())
+		{
+			unsigned int sumSize=0;
+			unsigned int oneFrameSize=0;
+			string lastFrame;
+			boost::asio::detail::mutex::scoped_lock lock(mutex_HandleVideo);
+			while(!vDeviceSource->empty())
+			{
+				lastFrame=vDeviceSource->back();
+				oneFrameSize=lastFrame.length();
+				if ((sumSize+oneFrameSize) > fMaxSize) 
+				{
+					vDeviceSource->pop_back();
+					fFrameSize = fMaxSize;
+					fNumTruncatedBytes = (sumSize+oneFrameSize) - fMaxSize;
+					memmove(fTo+sumSize, lastFrame.c_str(), oneFrameSize);
+					sumSize+=oneFrameSize;
+					break;
+				} 
+				else if(oneFrameSize>0)
+				{
+					vDeviceSource->pop_back();				
+					memmove(fTo+sumSize, lastFrame.c_str(), oneFrameSize);
+					sumSize+=oneFrameSize;
+					fFrameSize =sumSize;
+					fNumTruncatedBytes=0;
+				}
+			}
+			return true;
+		}
+	}
+	return false;
+}
+#endif
 std::string CdevSdk::CreateM3u8File()
 {
 	return m_pM3u8List.CreateM3u8File();
