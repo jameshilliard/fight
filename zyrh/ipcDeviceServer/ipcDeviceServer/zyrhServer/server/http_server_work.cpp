@@ -458,10 +458,11 @@ void http_server_work::HandleHttpCmd(handler_ptr handler,char* buf, unsigned int
 
 		std::string sMsg;
 		int  nRet = -1;
+		int ptz_type=0;
 		boost::shared_ptr<CdevSdk> pDevPtr = CGlobalClass::GetInstance()->GetDevManager()->GetDev(sDevid,nChannel);
 		if (pDevPtr)
 		{
-			nRet = pDevPtr->CmdPtzControl(sDevid,nChannel,ptz_cmd,action,param,sMsg);
+			nRet = pDevPtr->CmdPtzControl(sDevid,nChannel,ptz_type,ptz_cmd,action,param,sMsg);
 		}
 		else
 		{

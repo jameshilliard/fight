@@ -14,6 +14,7 @@ struct ptzControl
 {
 	unsigned int 	nchannel;
 	int 			ptz_cmd;
+	int 			ptz_type;
 	int 			action;
 	int 			param;
 	std::string 	smsg;
@@ -22,6 +23,8 @@ struct ptzControl
 typedef struct {
 	int 					m_commServerPort;
 	int 					m_rtspServerPort;
+	int 					m_beatEnable;
+	int						m_isOnline;
 	std::string 			m_userName;
 	std::string 			m_secret;    
 	std::string 			m_sDevId;

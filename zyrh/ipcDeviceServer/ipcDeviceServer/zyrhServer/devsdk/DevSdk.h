@@ -39,10 +39,9 @@ public:
 	void StartAudioEncoderThread();
 	std::string CreateM3u8File();
 	void OnTime(const boost::system::error_code& e);
-	int CmdPtzControl(std::string sdevid,unsigned int nchannel,int ptz_cmd,int action,int param,std::string& smsg );
+	int CmdPtzControl(std::string sdevid,unsigned int nchannel,int ptz_type,int ptz_cmd,int action,int param,std::string& smsg );
 
 	//zss++
-	//bool CdevSdk::GetVideoData(std::vector<std::string > *vDeviceSource,unsigned char *fTo,unsigned int &fFrameSize,unsigned int fMaxSize,unsigned int &fNumTruncatedBytes);
 	bool GetVideoData(std::vector<std::string > *vDeviceSource,unsigned char *ptData,unsigned int &frameSize,unsigned int dataMaxSize,unsigned int &curVideoIndex);
 	bool addDeviceSource(std::vector<std::string > *vDeviceSource);
 	bool removeDeviceSource(std::vector<std::string > *vDeviceSource);

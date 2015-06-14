@@ -44,12 +44,14 @@ int CDevManager::AddNewDev(CdevSdkParam mCdevSdkParam)
 		mCdevSdkParam.m_CdevChannelDeviceParam.m_nRtspServerStartPort=m_nRtspServerStartPort;
 		m_DevList.AddData(GetDevIdkey(mCdevSdkParam.m_sDevId,mCdevSdkParam.m_CdevChannelDeviceParam.m_nChannelNo),devPtr);
 		m_DevListIndex.AddData(devPtr->m_nIndex,devPtr);
+		mCdevSdkParam.m_CdevChannelDeviceParam.m_nRtspServerStartPort=m_nRtspServerStartPort;
 		m_nRtspServerStartPort++;
 		return devPtr->StartDev(mCdevSdkParam);
 	}
 	else
 	{
 		boost::shared_ptr<CdevSdk> devPtr=GetDev(mCdevSdkParam.m_sDevId,mCdevSdkParam.m_CdevChannelDeviceParam.m_nChannelNo);	
+		mCdevSdkParam.m_CdevChannelDeviceParam.m_nRtspServerStartPort=0;
 		if(!devPtr->m_CdevSdkParam.isEqual(mCdevSdkParam))
 			return devPtr->StartDev(mCdevSdkParam);
 	}
@@ -126,7 +128,7 @@ void CDevManager::StartCheckTimeOut()
 	m_Thread.StartThread(boost::bind(&CDevManager::CheckDevTimeOut,this));
 }
 
-BOOL CDevManager::decodeDeviceInfo(std::string deviceInfoString,CdevSdkParam &mCdevSdkParam)
+BOOL CDevManager::decodeDeviceInfo(std::string deviceInfoString,CdevSdkParam &mCdevSdkParam,std::string strOnlineDevice)
 {
 	TiXmlDocument doc;
 	doc.Parse((const char *)deviceInfoString.c_str());
@@ -139,6 +141,7 @@ BOOL CDevManager::decodeDeviceInfo(std::string deviceInfoString,CdevSdkParam &mC
 	TiXmlElement *lmtRoot = doc.RootElement();
 	if(!lmtRoot)
 		return FALSE;
+	std::vector<CdevSdkParam> vectorCdevSdkParam;
 	TiXmlElement *curDeviceInfo = lmtRoot->FirstChildElement("ZyrhDeviceInfo");
 	while(curDeviceInfo)
 	{
@@ -199,15 +202,42 @@ BOOL CDevManager::decodeDeviceInfo(std::string deviceInfoString,CdevSdkParam &mC
 				if(PlatDevPortElement)
 					mCdevSdkParam.m_CdevChannelDeviceParam.m_nPlatDevPort=atoi(PlatDevPortElement->FirstChild()->Value());
 			}
+			if(strOnlineDevice.find(mCdevSdkParam.m_sDevId)!=string::npos)
+				mCdevSdkParam.m_isOnline=1;
+			else
+				mCdevSdkParam.m_isOnline=0;
+			mCdevSdkParam.m_isChannelEnable=1;
 			AddNewDev(mCdevSdkParam);
+			vectorCdevSdkParam.push_back(mCdevSdkParam);
 			Sleep(100);
 			ChanneElement=ChanneElement->NextSiblingElement("ZyrhChannelInfo");
 		}
 		curDeviceInfo=curDeviceInfo->NextSiblingElement();
 	}
-
+	if(m_vectorCdevSdkParam.size()!=0)
+	{
+		vector<CdevSdkParam>::iterator lastIt;
+		vector<CdevSdkParam>::iterator nowIt;
+		int findFlag=1;
+		for (lastIt=m_vectorCdevSdkParam.begin() ; lastIt < m_vectorCdevSdkParam.end(); lastIt++ )
+		{
+			findFlag=0;
+			for (nowIt=vectorCdevSdkParam.begin(); nowIt<vectorCdevSdkParam.end(); nowIt++ )
+			{	
+				if(lastIt->m_sDevId==nowIt->m_sDevId && lastIt->m_CdevChannelDeviceParam.m_nChannelNo==nowIt->m_CdevChannelDeviceParam.m_nChannelNo)
+				{
+					findFlag=1;
+				}
+			}	
+			if(findFlag==0)
+			{
+				lastIt->m_isChannelEnable=0;
+				AddNewDev(*lastIt);	
+			}
+		}	
+	}
+	m_vectorCdevSdkParam=vectorCdevSdkParam;
 	return TRUE;
-	
 }
 
 void CDevManager::StartUpateDeviceInfo()
@@ -249,7 +279,7 @@ void CDevManager::StartUpateDeviceInfo()
 	GetPrivateProfileString("ZyrhOpenService","LocalIpaddr","",buf,2048,m_configPath.c_str());
 	sCdevSdkParam.m_CdevChannelDeviceParam.m_sLocalIpaddr = buf;
 
-	GetPrivateProfileString("ZyrhOpenService","LocalIpaddr","",buf,2048,m_configPath.c_str());
+	GetPrivateProfileString("ZyrhOpenService","DaHuaBeatEnable","",buf,2048,m_configPath.c_str());
 	sCdevSdkParam.m_beatEnable = atoi(buf);
 	
 	for (int i = 1;i<=6;i++)
@@ -280,31 +310,46 @@ void CDevManager::StartUpateDeviceInfo()
 		}
 		str = str2;
 	}
-
+	std::string strDeviceInfoHttpAddr="";
+	std::string strOnlineDeviceCodeHttpAddr="";
 	sCdevSdkParam.m_CdevChannelDeviceParam.m_nRtspServerStartPort=m_nRtspServerStartPort;
 	sCdevSdkParam.m_CdevChannelDeviceParam.m_nRtspServerStopPort=m_nRtspServerStopPort;
 	memset(buf,0,sizeof(buf));
 	sprintf(buf,"http://%s:%d/ws/zyrh.asmx/GetDevicePlatLinkageConfig",sCdevSdkParam.m_sSdkServerIp.c_str(),iWebPort);
-	m_DeviceInfoHttpAddr=buf;
+	strDeviceInfoHttpAddr.append(buf);
+
+	memset(buf,0,sizeof(buf));
+	sprintf(buf,"http://%s:%d/ws/zyrh.asmx/GetOnlineDeviceCode",sCdevSdkParam.m_sSdkServerIp.c_str(),iWebPort);
+	strOnlineDeviceCodeHttpAddr.append(buf);
+	//http://60.12.220.24:81/ws/zyrh.asmx/GetOnlineDeviceCode  m_OnlineDeviceCodeHttpAddr
 
 	while(m_bDevManagerStart)
 	{
-		std::string strRet="";
-		sHttpClient.HttpPost(m_DeviceInfoHttpAddr,"strDevCodeList=",strlen("strDevCodeList="),strRet);
-		if(!strRet.empty())
+		std::string strOnlineDeviceRet="";
+		sHttpClient.HttpPost(strOnlineDeviceCodeHttpAddr,"",0,strOnlineDeviceRet);
+		if(!strOnlineDeviceRet.empty())
 		{
-			decodeDeviceInfo(strRet,sCdevSdkParam);	
-			Sleep(6000);
+			std::string strRet="";
+			sHttpClient.HttpPost(strDeviceInfoHttpAddr,"strDevCodeList=",strlen("strDevCodeList="),strRet);
+			if(!strRet.empty())
+			{
+				//if(strOnlineDeviceRet.find("string")!=string::npos)
+					//printf("---%s---\n",strOnlineDeviceRet.c_str());
+				decodeDeviceInfo(strRet,sCdevSdkParam,strOnlineDeviceRet);
+				Sleep(30000);
+			}
+			else
+			{
+				g_logger.TraceInfo("read %s",strDeviceInfoHttpAddr.c_str());
+				Sleep(2000);
+			}
 		}
 		else
 		{
-			g_logger.TraceInfo("read %s",m_DeviceInfoHttpAddr.c_str());
-			Sleep(1000);
+			g_logger.TraceInfo("read %s",strDeviceInfoHttpAddr.c_str());
+			Sleep(2000);
 		}
-		
 	}
-	
-
 }
 void CDevManager::UpateDeviceInfo()
 {

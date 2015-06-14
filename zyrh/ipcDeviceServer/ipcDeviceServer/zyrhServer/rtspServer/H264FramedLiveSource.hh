@@ -16,12 +16,17 @@ protected:
 
 private:
 	virtual void doGetNextFrame();
+	
 	int TransportData(unsigned char* to, unsigned maxSize);
-
-public:
-	CdevSdk 					*m_ptCdevSdk;
+	
+	
+protected:
 	unsigned int 				m_curVideoIndex;
 	std::vector<std::string > 	m_h264Data;
+	
+public:
+	CdevSdk 		*m_ptCdevSdk;
+
 };
 
 #endif

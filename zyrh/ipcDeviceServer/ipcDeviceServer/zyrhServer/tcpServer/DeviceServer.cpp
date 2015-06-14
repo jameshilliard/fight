@@ -27,15 +27,19 @@ int concovtPtzData(NET_PTZ_CTRL_DATA netPTZCtrlData,ptzControl *mptzControl)
 		return -1;
 	if(netPTZCtrlData.command<100)
 	{
+		mptzControl->ptz_type=0;
 		switch(netPTZCtrlData.command)
 		{
 		case GOTO_PRESET:
+			mptzControl->ptz_type=1;
 			mptzControl->ptz_cmd= WMP_PRESET_GOTO;
 			break;	
 		case SET_PRESET:
+			mptzControl->ptz_type=1;
 			mptzControl->ptz_cmd= WMP_PRESET_SET;
 			break;
 		case CLE_PRESET:
+			mptzControl->ptz_type=1;
 			mptzControl->ptz_cmd=  WMP_PRESET_DEL;
 			break;	
 		case TILT_UP:
@@ -196,14 +200,14 @@ STATUS DeviceServerConnection::reloveOnePacket(StreamSocket  &connfd,char *recvb
 		retVal = netClientPTZControl(connfd, recvbuff, pClientSockAddr,netPTZCtrlData);
 		concovtPtzData(netPTZCtrlData,&m_IpcDeviceParams->m_ptzControl);
 		if(m_nCdevSdk!=NULL)
-			retVal = m_nCdevSdk->CmdPtzControl(m_IpcDeviceParams->m_sDevId,m_IpcDeviceParams->m_nnchannel,m_IpcDeviceParams->m_ptzControl.ptz_cmd,m_IpcDeviceParams->m_ptzControl.action,m_IpcDeviceParams->m_ptzControl.param,ptzString);
+			retVal = m_nCdevSdk->CmdPtzControl(m_IpcDeviceParams->m_sDevId,m_IpcDeviceParams->m_nnchannel,m_IpcDeviceParams->m_ptzControl.ptz_type,m_IpcDeviceParams->m_ptzControl.ptz_cmd,m_IpcDeviceParams->m_ptzControl.action,m_IpcDeviceParams->m_ptzControl.param,ptzString);
 		break;
 	case DVR_PTZWITHSPEED:          			/*PTZ ctrl with speed*/
 		NET_INFO(("DVR_PTZWITHSPEED.\n"));
 		retVal = netClientPTZControlWithSpeed(connfd, recvbuff, pClientSockAddr,netPTZCtrlData);
 		concovtPtzData(netPTZCtrlData,&m_IpcDeviceParams->m_ptzControl);
 		if(m_nCdevSdk!=NULL)
-			retVal = m_nCdevSdk->CmdPtzControl(m_IpcDeviceParams->m_sDevId,m_IpcDeviceParams->m_nnchannel,m_IpcDeviceParams->m_ptzControl.ptz_cmd,m_IpcDeviceParams->m_ptzControl.action,m_IpcDeviceParams->m_ptzControl.param,ptzString);
+			retVal = m_nCdevSdk->CmdPtzControl(m_IpcDeviceParams->m_sDevId,m_IpcDeviceParams->m_nnchannel,m_IpcDeviceParams->m_ptzControl.ptz_type,m_IpcDeviceParams->m_ptzControl.ptz_cmd,m_IpcDeviceParams->m_ptzControl.action,m_IpcDeviceParams->m_ptzControl.param,ptzString);
 		break;
 	case NETCMD_TRANSPTZ:
 		NET_INFO(("NETCMD_TRANSPTZ.\n"));
@@ -248,6 +252,12 @@ void DeviceServerConnection::run()
 	while(1)
 	{
 		int iRet =socket().receiveBytes(&cmdLength, sizeof(cmdLength));
+		if(m_IpcDeviceParams->m_beatEnable==0 && m_IpcDeviceParams->m_isOnline==0)
+		{
+			Sleep(1000);
+			socket().shutdown();
+			break;
+		}
 		if(iRet==sizeof(cmdLength))
 		{
 			cmdLength=ntohl(cmdLength);
@@ -334,6 +344,8 @@ void DeviceServer::setCdevSdkParam(CdevSdkParam sCdevSdkParam,CdevSdk *mCdevSdk)
 	m_ipcDeviceParams->m_sDevId=sCdevSdkParam.m_sDevId;
 	m_ipcDeviceParams->m_nnchannel=sCdevSdkParam.m_CdevChannelDeviceParam.m_nChannelNo;
 	m_ipcDeviceParams->m_sLocalIpaddr=sCdevSdkParam.m_CdevChannelDeviceParam.m_sLocalIpaddr;
+	m_ipcDeviceParams->m_beatEnable=sCdevSdkParam.m_beatEnable;
+	m_ipcDeviceParams->m_isOnline=sCdevSdkParam.m_isOnline;
 }
 
 void DeviceServer::start()

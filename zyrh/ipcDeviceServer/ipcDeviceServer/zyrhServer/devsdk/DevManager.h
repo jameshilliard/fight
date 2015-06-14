@@ -20,7 +20,7 @@ public:
 	void CheckDevTimeOut();
 	void StartUpateDeviceInfo();
 	void UpateDeviceInfo();
-	BOOL decodeDeviceInfo(std::string deviceInfoString,CdevSdkParam &mCdevSdkParam);
+	BOOL decodeDeviceInfo(std::string deviceInfoString,CdevSdkParam &mCdevSdkParam,std::string strOnlineDevice);
 
 private:
 	CMyMap<std::string,boost::shared_ptr<CdevSdk>> m_DevList;
@@ -29,7 +29,7 @@ private:
 	CThread m_Thread;
 	CThread m_UpateDeviceInfoThread;
 	std::string m_configPath;
-	std::string m_DeviceInfoHttpAddr;
+	std::vector<CdevSdkParam> m_vectorCdevSdkParam;
 	//#模拟IPC服务器停止流类型0:http停流接口无效,改为超时时间 1:http停流接口有效
 	unsigned int m_serverStopStreamType;
 	//#模拟IPC服务器停流时间单位分钟

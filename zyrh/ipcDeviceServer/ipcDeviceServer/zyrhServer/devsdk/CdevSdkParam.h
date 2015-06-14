@@ -65,6 +65,7 @@ public:
 		m_sDevId="";
 
 		m_beatEnable=0;
+		m_isOnline=0;
 		m_nChannelQuantity=0;
 		m_nAudioType=0;
 		m_nLimitedPreviewTime=0;
@@ -83,6 +84,12 @@ public:
 		if(m_nAudioType!=mCdevSdkParam.m_nAudioType)
 			return false;		
 		if(m_nLimitedPreviewTime!=mCdevSdkParam.m_nLimitedPreviewTime)
+			return false;
+		if(m_isOnline!=mCdevSdkParam.m_isOnline)
+			return false;
+		if(m_beatEnable!=mCdevSdkParam.m_beatEnable)
+			return false;
+		if(m_isChannelEnable!=mCdevSdkParam.m_isChannelEnable)
 			return false;
 		return m_CdevChannelDeviceParam.isEqual(mCdevSdkParam.m_CdevChannelDeviceParam);
 	}
@@ -117,6 +124,8 @@ public:
 	unsigned int    m_nAudioType;
 	unsigned int    m_nLimitedPreviewTime;
 	unsigned int 	m_beatEnable;
+	unsigned int 	m_isOnline;
+	unsigned int 	m_isChannelEnable;
 
 	CdevChannelDeviceParam m_CdevChannelDeviceParam;
 };

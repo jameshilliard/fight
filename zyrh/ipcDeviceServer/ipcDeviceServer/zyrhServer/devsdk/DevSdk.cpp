@@ -460,8 +460,9 @@ void CdevSdk::RtspOnTime(const boost::system::error_code& e)
 	}
 	if (m_watchVariable==1)
 	{
-		g_logger.TraceInfo("重启rtsp服务器");	
-		StartRtspServerThread();
+		g_logger.TraceInfo("重启rtsp服务器");
+		if(m_CdevSdkParam.m_isChannelEnable==1 && m_CdevSdkParam.m_isOnline==1)
+			StartRtspServerThread();
 	}
 	m_rtsp_timer_Ptr->expires_from_now(boost::posix_time::seconds(5));
 	m_rtsp_timer_Ptr->async_wait(boost::bind(&CdevSdk::RtspOnTime,shared_from_this(),boost::asio::placeholders::error));
@@ -511,16 +512,24 @@ int CdevSdk::StartDev(CdevSdkParam cdevSdkParam)
 	m_nnchannel = cdevSdkParam.m_CdevChannelDeviceParam.m_nChannelNo;
 	m_sDevId = cdevSdkParam.m_sDevId;
 	m_pM3u8List.m_sdveid = cdevSdkParam.m_sDevId;
-
+	if(cdevSdkParam.m_CdevChannelDeviceParam.m_nRtspServerStartPort==0)
+		cdevSdkParam.m_CdevChannelDeviceParam.m_nRtspServerStartPort=m_CdevSdkParam.m_CdevChannelDeviceParam.m_nRtspServerStartPort;
 	m_CdevSdkParam=cdevSdkParam;
 	m_DeviceServer.setCdevSdkParam(m_CdevSdkParam,this);
 	m_DeviceServer.stop();
-	Sleep(100);
-	m_DeviceServer.start();
-	StartRtspServerThread();
-	m_rtsp_timer_Ptr->expires_from_now(boost::posix_time::seconds(5));
-	m_rtsp_timer_Ptr->async_wait(boost::bind(&CdevSdk::RtspOnTime,shared_from_this(),boost::asio::placeholders::error));
-
+	stopRtspServerThread();
+	Sleep(200);
+	if(m_CdevSdkParam.m_isChannelEnable==1)
+	{
+		m_DeviceServer.start();
+		StartRtspServerThread();
+		m_rtsp_timer_Ptr->expires_from_now(boost::posix_time::seconds(5));
+		m_rtsp_timer_Ptr->async_wait(boost::bind(&CdevSdk::RtspOnTime,shared_from_this(),boost::asio::placeholders::error));
+	}
+	else
+	{
+		StopPlay();
+	}
 	return 0;
 }
 
@@ -565,14 +574,19 @@ bool CdevSdk::ReStartDev()
 {
 	boost::asio::detail::mutex::scoped_lock lock(mutex_Lock);
 	int size=m_deviceSource.size();
-	//if((time(NULL) - m_rtspTime) < 5 && m_rtspTime!=0)
-	//{
-	//	return true;
-	//}
+	if((time(NULL) - m_rtspTime) < 2 && m_rtspTime!=0)
+	{
+		return true;
+	}
 	m_rtspTime=time(NULL);
 	for (int i=0; i<size; i++)
 	{
 		m_deviceSource[i]->clear();
+	}
+	if(m_CdevSdkParam.m_isOnline==0 || m_CdevSdkParam.m_isChannelEnable==0)
+	{
+		g_logger.TraceInfo("sdk 控制端口:%d rtsp服务端口:%d 重新取流 设备ID:%s 设备通道号:%d,设备线路号:%d,不在线 %d %d",m_CdevSdkParam.m_CdevChannelDeviceParam.m_nPlatDevPort,m_CdevSdkParam.m_CdevChannelDeviceParam.m_nRtspServerStartPort,m_sDevId.c_str(),m_nnchannel,m_nDevLine,m_CdevSdkParam.m_isOnline,m_CdevSdkParam.m_isChannelEnable);
+		return false;
 	}
 	StopPlay();
 	if(m_watchVariable==1)
@@ -584,13 +598,11 @@ bool CdevSdk::ReStartDev()
 	{
 		return false;
 	}
-	g_logger.TraceInfo("sdk");
 	int ret =  WMP_Login(m_wmp_handle,m_sServerIp.c_str(),m_nServerPort, m_sDevId.c_str(),m_spassword.c_str(),m_nServerLine);
 	if (ret == -1)
 	{
 		return false;
 	}
-	g_logger.TraceInfo("sdk2");
 	ret = WMP_Play(m_wmp_handle,
 		m_sDevId.c_str(),//devid:设备ID
 		m_nnchannel,//channel:设备通道号
@@ -611,7 +623,7 @@ void CdevSdk::ResetParam()
 	m_wmp_handle = -1;
 
 }
-int CdevSdk::CmdPtzControl(std::string sdevid,unsigned int nchannel,int ptz_cmd,int action,int param,std::string& smsg )
+int CdevSdk::CmdPtzControl(std::string sdevid,unsigned int nchannel,int ptz_type,int ptz_cmd,int action,int param,std::string& smsg )
 {
 	int nSdkRet = -1;
 	if (m_wmp_handle == -1)
@@ -619,8 +631,8 @@ int CdevSdk::CmdPtzControl(std::string sdevid,unsigned int nchannel,int ptz_cmd,
 		smsg = "设备未登陆";
 		return nSdkRet;
 	}
-	g_logger.TraceInfo("sdk重新取流 设备ID:%s 设备通道号:%d,云台命令:%d,云台操作:%d,云台参数:%d ",sdevid.c_str(),m_nnchannel,ptz_cmd,action,param);
-	if(ptz_cmd!= WMP_PRESET_GOTO && ptz_cmd!= WMP_PRESET_SET && ptz_cmd!= CLE_PRE_SEQ)
+	g_logger.TraceInfo("设备ID:%s 设备通道号:%d,云台命令:%d,云台操作:%d,云台参数:%d ",sdevid.c_str(),m_nnchannel,ptz_cmd,action,param);
+	if(ptz_type != 1)
 		nSdkRet = WMP_PtzControl(m_wmp_handle,sdevid.c_str(),nchannel,ptz_cmd,action,param);
 	else
 		nSdkRet = WMP_SetPreset(m_wmp_handle,sdevid.c_str(),nchannel,ptz_cmd,param,"test");
@@ -761,7 +773,6 @@ bool CdevSdk::GetVideoData(std::vector<std::string > *vDeviceSource,unsigned cha
 		unsigned int timeOut=0;
 		if(vDeviceSource->empty())
 		{
-			//g_logger.TraceInfo("start %d",vDeviceSource->size());
 			do
 			{
 				Sleep(100);
@@ -771,7 +782,6 @@ bool CdevSdk::GetVideoData(std::vector<std::string > *vDeviceSource,unsigned cha
 				bFindFlag=vDeviceSource->empty();
 			}
 			while(bFindFlag);
-			//g_logger.TraceInfo("over %d",vDeviceSource->size());
 		}
 		boost::asio::detail::mutex::scoped_lock lock(mutex_HandleVideo);
 		if(!vDeviceSource->empty())
@@ -814,79 +824,6 @@ bool CdevSdk::GetVideoData(std::vector<std::string > *vDeviceSource,unsigned cha
 	
 }
 
-
-#if 0
-bool CdevSdk::GetVideoData(std::vector<std::string > *vDeviceSource,unsigned char *fTo,unsigned int &fFrameSize,unsigned int fMaxSize,unsigned int &fNumTruncatedBytes)
-{
-	if(vDeviceSource==NULL)
-	{
-		fFrameSize =0;
-		fNumTruncatedBytes=0;
-		return false;
-	}
-	unsigned int i=0;
-	fFrameSize=0;
-	fNumTruncatedBytes=0;
-	bool bFindFlag=false;
-	{
-		boost::asio::detail::mutex::scoped_lock lock(mutex_HandleVideo);
-		for (i=0; i<m_deviceSource.size(); i++)
-		{
-			if(m_deviceSource[i]==vDeviceSource)
-			{
-				bFindFlag=true;
-			}
-		}
-	}
-	if(bFindFlag)
-	{
-		unsigned int timeOut=0;
-		if(vDeviceSource->empty())
-		{
-			do
-			{
-				Sleep(100);
-				timeOut++;
-				if(timeOut>3)
-					break;
-				bFindFlag=vDeviceSource->empty();
-			}
-			while(bFindFlag);
-		}
-		if(!vDeviceSource->empty())
-		{
-			unsigned int sumSize=0;
-			unsigned int oneFrameSize=0;
-			string lastFrame;
-			boost::asio::detail::mutex::scoped_lock lock(mutex_HandleVideo);
-			while(!vDeviceSource->empty())
-			{
-				lastFrame=vDeviceSource->back();
-				oneFrameSize=lastFrame.length();
-				if ((sumSize+oneFrameSize) > fMaxSize) 
-				{
-					vDeviceSource->pop_back();
-					fFrameSize = fMaxSize;
-					fNumTruncatedBytes = (sumSize+oneFrameSize) - fMaxSize;
-					memmove(fTo+sumSize, lastFrame.c_str(), oneFrameSize);
-					sumSize+=oneFrameSize;
-					break;
-				} 
-				else if(oneFrameSize>0)
-				{
-					vDeviceSource->pop_back();				
-					memmove(fTo+sumSize, lastFrame.c_str(), oneFrameSize);
-					sumSize+=oneFrameSize;
-					fFrameSize =sumSize;
-					fNumTruncatedBytes=0;
-				}
-			}
-			return true;
-		}
-	}
-	return false;
-}
-#endif
 std::string CdevSdk::CreateM3u8File()
 {
 	return m_pM3u8List.CreateM3u8File();
@@ -1200,7 +1137,6 @@ void CdevSdk::stopRtspServerThread()
 {
 	m_watchVariable=1;
 	m_rtspServerStart=false;
-	m_rtspServerThread.StopThread();
 }
 
 #define BUFSIZE 1024*1024*1
@@ -1241,7 +1177,8 @@ int CdevSdk::startRtspServer()
 		rtspServer = RTSPServer::createNew(*env,m_CdevSdkParam.m_CdevChannelDeviceParam.m_nRtspServerStartPort, authDB);
 		if (rtspServer == NULL) {
 			g_logger.TraceInfo("Failed to create RTSP server: %s",env->getResultMsg());
-			m_CdevSdkParam.m_CdevChannelDeviceParam.m_nRtspServerStartPort++;
+			return 0;
+			//m_CdevSdkParam.m_CdevChannelDeviceParam.m_nRtspServerStartPort++;
 		}
 		else
 			break;
