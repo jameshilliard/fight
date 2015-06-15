@@ -585,7 +585,11 @@ bool CdevSdk::ReStartDev()
 	}
 	if(m_CdevSdkParam.m_isOnline==0 || m_CdevSdkParam.m_isChannelEnable==0)
 	{
-		g_logger.TraceInfo("sdk 控制端口:%d rtsp服务端口:%d 重新取流 设备ID:%s 设备通道号:%d,设备线路号:%d,不在线 %d %d",m_CdevSdkParam.m_CdevChannelDeviceParam.m_nPlatDevPort,m_CdevSdkParam.m_CdevChannelDeviceParam.m_nRtspServerStartPort,m_sDevId.c_str(),m_nnchannel,m_nDevLine,m_CdevSdkParam.m_isOnline,m_CdevSdkParam.m_isChannelEnable);
+		if(m_CdevSdkParam.m_isOnline!=m_LastCdevSdkParam.m_isOnline || m_CdevSdkParam.m_isChannelEnable!=m_LastCdevSdkParam.m_isChannelEnable)
+		{
+			m_LastCdevSdkParam=m_CdevSdkParam;
+			g_logger.TraceInfo("sdk 控制端口:%d rtsp服务端口:%d 重新取流 设备ID:%s 设备通道号:%d,设备线路号:%d,不在线 %d %d",m_CdevSdkParam.m_CdevChannelDeviceParam.m_nPlatDevPort,m_CdevSdkParam.m_CdevChannelDeviceParam.m_nRtspServerStartPort,m_sDevId.c_str(),m_nnchannel,m_nDevLine,m_CdevSdkParam.m_isOnline,m_CdevSdkParam.m_isChannelEnable);
+		}
 		return false;
 	}
 	StopPlay();
@@ -771,18 +775,18 @@ bool CdevSdk::GetVideoData(std::vector<std::string > *vDeviceSource,unsigned cha
 	if(bFindFlag)
 	{
 		unsigned int timeOut=0;
-		if(vDeviceSource->empty())
-		{
-			do
-			{
-				Sleep(100);
-				timeOut++;
-				if(timeOut>3)
-					break;
-				bFindFlag=vDeviceSource->empty();
-			}
-			while(bFindFlag);
-		}
+		//if(vDeviceSource->empty())
+		//{
+		//	do
+		//	{
+		//		Sleep(100);
+		//		timeOut++;
+		//		if(timeOut>3)
+		//			break;
+		//		bFindFlag=vDeviceSource->empty();
+		//	}
+		//	while(bFindFlag);
+		//}
 		boost::asio::detail::mutex::scoped_lock lock(mutex_HandleVideo);
 		if(!vDeviceSource->empty())
 		{

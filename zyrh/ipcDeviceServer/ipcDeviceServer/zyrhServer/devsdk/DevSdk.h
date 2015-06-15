@@ -120,6 +120,7 @@ public:
 	CThread m_rtspServerThread;
 	bool	m_rtspServerStart;
 	CdevSdkParam m_CdevSdkParam;
+	CdevSdkParam m_LastCdevSdkParam;
 	char	m_watchVariable;
 	DeviceServer m_DeviceServer;
 	time_t  m_rtspTime;
