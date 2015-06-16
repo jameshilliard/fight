@@ -122,6 +122,7 @@ public:
 	CdevSdkParam m_CdevSdkParam;
 	CdevSdkParam m_LastCdevSdkParam;
 	char	m_watchVariable;
+	char	m_rtspEndFlag;
 	DeviceServer m_DeviceServer;
 	time_t  m_rtspTime;
 	//zss--

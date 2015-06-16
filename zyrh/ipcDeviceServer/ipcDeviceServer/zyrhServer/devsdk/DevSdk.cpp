@@ -517,8 +517,8 @@ int CdevSdk::StartDev(CdevSdkParam cdevSdkParam)
 	m_CdevSdkParam=cdevSdkParam;
 	m_DeviceServer.setCdevSdkParam(m_CdevSdkParam,this);
 	m_DeviceServer.stop();
-	stopRtspServerThread();
-	Sleep(200);
+	//stopRtspServerThread();
+	//Sleep(200);
 	if(m_CdevSdkParam.m_isChannelEnable==1)
 	{
 		m_DeviceServer.start();
@@ -574,11 +574,14 @@ bool CdevSdk::ReStartDev()
 {
 	boost::asio::detail::mutex::scoped_lock lock(mutex_Lock);
 	int size=m_deviceSource.size();
-	if((time(NULL) - m_rtspTime) < 2 && m_rtspTime!=0)
+	if (m_wmp_handle != -1)
 	{
-		return true;
+		if((time(NULL) - m_rtspTime) < 3 && m_rtspTime!=0)
+		{
+			return true;
+		}
+		m_rtspTime=time(NULL);
 	}
-	m_rtspTime=time(NULL);
 	for (int i=0; i<size; i++)
 	{
 		m_deviceSource[i]->clear();
@@ -592,9 +595,14 @@ bool CdevSdk::ReStartDev()
 		}
 		return false;
 	}
-	StopPlay();
+	if (m_wmp_handle != -1)
+	{
+		StopPlay();
+	}
 	if(m_watchVariable==1)
+	{
 		StartRtspServerThread();
+	}
 	m_AudioBuflist.clear();
 	m_VideoBuflist.clear();
 	m_wmp_handle = WMP_Create();
@@ -997,7 +1005,13 @@ void CdevSdk::handleVideo(uint8_t* vidoebuf,uint32_t bufsize,__int64 TimeStamp,b
 		}
 	}
 	if(getVideoFlag==1)
-		StopPlay();
+	{
+		if (m_wmp_handle != -1)
+		{
+			StopPlay();
+		}
+	}
+		
 	//m_pM3u8List.handleVideo(vidoebuf,bufsize,TimeStamp,bkey);
 	//if(m_nType&0x01)
 	{
@@ -1135,7 +1149,10 @@ void CdevSdk::StartRtspServerThread()
 {
 	m_watchVariable=0;
 	m_rtspServerStart=true;
-	m_rtspServerThread.StartThread(boost::bind(&CdevSdk::runRtspServerActivity,this));
+	if(m_rtspEndFlag==0)
+	{
+		m_rtspServerThread.StartThread(boost::bind(&CdevSdk::runRtspServerActivity,this));
+	}	
 }
 void CdevSdk::stopRtspServerThread()
 {
@@ -1206,6 +1223,7 @@ int CdevSdk::startRtspServer()
 	}
 	catch(...)
 	{
+		m_rtspEndFlag=1;
 		g_logger.TraceInfo("env->taskScheduler().doEventLoop is %s\n",env->getResultMsg());
 	}
 	g_logger.TraceInfo("tcpserver:%d rtspServer:%d is stop--\n",m_CdevSdkParam.m_CdevChannelDeviceParam.m_nPlatDevPort,m_CdevSdkParam.m_CdevChannelDeviceParam.m_nRtspServerStartPort);
@@ -1220,6 +1238,8 @@ int CdevSdk::startRtspServer()
 void CdevSdk::runRtspServerActivity()
 {
 	m_watchVariable=0;
+	m_rtspEndFlag=1;
 	startRtspServer();
 	m_watchVariable=1;
+	m_rtspEndFlag=0;
 }

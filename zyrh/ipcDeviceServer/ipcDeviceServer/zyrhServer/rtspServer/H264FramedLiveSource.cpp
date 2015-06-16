@@ -55,7 +55,7 @@ void H264FramedLiveSource::doGetNextFrame()
 	if(fFrameSize==0)
 		nextTask() = envir().taskScheduler().scheduleDelayedTask(40,(TaskFunc*)FramedSource::afterGetting, this);//表示延迟0秒后再执行 afterGetting 函数
 	else
-		nextTask() = envir().taskScheduler().scheduleDelayedTask(0,(TaskFunc*)FramedSource::afterGetting, this);//表示延迟0秒后再执行 afterGetting 函数
+	nextTask() = envir().taskScheduler().scheduleDelayedTask(0,(TaskFunc*)FramedSource::afterGetting, this);//表示延迟0秒后再执行 afterGetting 函数
 	return;
 }
 
