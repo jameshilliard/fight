@@ -398,7 +398,7 @@ CdevSdk::CdevSdk()
 
 	m_stream_handle=-1;
 	m_wmp_handle=-1;
-
+	m_rtspEndFlag=0;
 }
 
 CdevSdk::~CdevSdk()
@@ -800,7 +800,7 @@ bool CdevSdk::GetVideoData(std::vector<std::string > *vDeviceSource,unsigned cha
 		{
 			std::vector<std::string >::iterator it=vDeviceSource->begin();
 			frameSize=it->length();
-			//printf("this time:%d,this 0x%x,fFrameSize 1 is %d--%d-%d-\n",GetTickCount(),this,frameSize,curVideoIndex,dataMaxSize);
+			printf("this time:%d %d,this 0x%x,fFrameSize 1 is %d--%d-%d-\n",GetTickCount(),vDeviceSource->size(),this,frameSize,curVideoIndex,dataMaxSize);
 			if(curVideoIndex!=0)
 			{	
 				frameSize=frameSize-curVideoIndex;
@@ -1183,7 +1183,7 @@ int CdevSdk::startRtspServer()
 			ReceivingInterfaceAddr = *(unsigned*)(addresses.firstAddress()->data());
 		}
 	}
-	OutPacketBuffer::maxSize = 1000000; // allow for some possibly large H.264 frames
+	OutPacketBuffer::maxSize = 300000; // allow for some possibly large H.264 frames
 	Boolean reuseFirstSource = False;//如果为“true”则其他接入的客户端跟第一个客户端看到一样的视频流，否则其他客户端接入的时候将重新播放
 	TaskScheduler* scheduler = BasicTaskScheduler::createNew();
 	env = BasicUsageEnvironment::createNew(*scheduler);
@@ -1211,7 +1211,9 @@ int CdevSdk::startRtspServer()
 	ServerMediaSession* sms = ServerMediaSession::createNew(*env, streamName, NULL,descriptionString,False);
 	char const* streamNameClientDemo = "mpeg4/ch01/main/av_stream";
 	ServerMediaSession* smsClientDemo = ServerMediaSession::createNew(*env, streamNameClientDemo, NULL,descriptionString,False);
+	OutPacketBuffer::maxSize = 300000; // allow for some possibly large H.264 frames
 	sms->addSubsession(H264LiveVideoServerMediaSubssion::createNew(*env, reuseFirstSource,this));//修改为自己实现的H264LiveVideoServerMediaSubssion
+	OutPacketBuffer::maxSize = 300000; // allow for some possibly large H.264 frames
 	smsClientDemo->addSubsession(H264LiveVideoServerMediaSubssion::createNew(*env, reuseFirstSource,this));//修改为自己实现的H264LiveVideoServerMediaSubssion
 	rtspServer->addServerMediaSession(sms);
 	rtspServer->addServerMediaSession(smsClientDemo);
