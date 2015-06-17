@@ -800,7 +800,7 @@ bool CdevSdk::GetVideoData(std::vector<std::string > *vDeviceSource,unsigned cha
 		{
 			std::vector<std::string >::iterator it=vDeviceSource->begin();
 			frameSize=it->length();
-			printf("this time:%d %d,this 0x%x,fFrameSize 1 is %d--%d-%d-\n",GetTickCount(),vDeviceSource->size(),this,frameSize,curVideoIndex,dataMaxSize);
+			//printf("this time:%d %d,this 0x%x,fFrameSize 1 is %d--%d-%d-\n",GetTickCount(),vDeviceSource->size(),this,frameSize,curVideoIndex,dataMaxSize);
 			if(curVideoIndex!=0)
 			{	
 				frameSize=frameSize-curVideoIndex;
