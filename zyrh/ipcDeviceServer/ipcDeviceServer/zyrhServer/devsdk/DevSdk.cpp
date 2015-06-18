@@ -576,7 +576,7 @@ bool CdevSdk::ReStartDev()
 	int size=m_deviceSource.size();
 	if (m_wmp_handle != -1)
 	{
-		if((time(NULL) - m_rtspTime) < 3 && m_rtspTime!=0)
+		if((time(NULL) - m_rtspTime) < 6 && m_rtspTime!=0)
 		{
 			return true;
 		}
@@ -819,6 +819,32 @@ bool CdevSdk::GetVideoData(std::vector<std::string > *vDeviceSource,unsigned cha
 			if(curVideoIndex==0)
 			{
 				vDeviceSource->erase(it);
+#if 0
+				int tempFrameSize=0;
+				for(int i=1;i<200;i++)
+				{
+					if(!vDeviceSource->empty())
+					{
+						it=vDeviceSource->begin();
+						tempFrameSize=it->length();
+						if(tempFrameSize<=(dataMaxSize-frameSize))
+						{
+							memcpy(ptData+frameSize,it->c_str(),tempFrameSize);
+							frameSize=frameSize+tempFrameSize;
+							vDeviceSource->erase(it);
+						}
+						else
+						{
+							break;
+						}
+					}
+					else
+					{
+						break;
+					}
+						
+				}
+#endif
 				return true;
 			}
 			else
@@ -1162,11 +1188,11 @@ void CdevSdk::stopRtspServerThread()
 
 #define BUFSIZE 1024*1024*1
 
-void announceStream(RTSPServer* rtspServer, ServerMediaSession* sms,char const* streamName)//显示RTSP连接信息
+void announceStream(RTSPServer* rtspServer, ServerMediaSession* sms,char const* streamName,int tcpPort)//显示RTSP连接信息
 {
 	char* url = rtspServer->rtspURL(sms);
 	UsageEnvironment& env = rtspServer->envir();
-	g_logger.TraceInfo("Play this stream using the URL :%s",url);
+	g_logger.TraceInfo("TcpServer %d,this stream using the URL :%s",tcpPort,url);
 	delete[] url;
 }
 int CdevSdk::startRtspServer() 
@@ -1183,8 +1209,8 @@ int CdevSdk::startRtspServer()
 			ReceivingInterfaceAddr = *(unsigned*)(addresses.firstAddress()->data());
 		}
 	}
-	OutPacketBuffer::maxSize = 300000; // allow for some possibly large H.264 frames
-	Boolean reuseFirstSource = False;//如果为“true”则其他接入的客户端跟第一个客户端看到一样的视频流，否则其他客户端接入的时候将重新播放
+	OutPacketBuffer::maxSize = 500000; // allow for some possibly large H.264 frames
+	Boolean reuseFirstSource = true;//如果为“true”则其他接入的客户端跟第一个客户端看到一样的视频流，否则其他客户端接入的时候将重新播放
 	TaskScheduler* scheduler = BasicTaskScheduler::createNew();
 	env = BasicUsageEnvironment::createNew(*scheduler);
 
@@ -1193,17 +1219,18 @@ int CdevSdk::startRtspServer()
 	//authDB = new UserAuthenticationDatabase;
 	//authDB->addUserRecord("admin", "12345"); // replace these with real strings
 	RTSPServer* rtspServer=NULL;
-	while(1)
+	//while(1)
 	{
 		rtspServer = RTSPServer::createNew(*env,m_CdevSdkParam.m_CdevChannelDeviceParam.m_nRtspServerStartPort, authDB);
 		if (rtspServer == NULL) {
-			g_logger.TraceInfo("Failed to create RTSP server: %s",env->getResultMsg());
+			Sleep(1000);
+			g_logger.TraceInfo("Failed to create RTSP prot:%d server: %s",m_CdevSdkParam.m_CdevChannelDeviceParam.m_nRtspServerStartPort,env->getResultMsg());
 			return 0;
 			//m_CdevSdkParam.m_CdevChannelDeviceParam.m_nRtspServerStartPort++;
 		}
-		else
-			break;
-		Sleep(1000);
+		//else
+		//	break;
+		//Sleep(1000);
 	}
 	m_DeviceServer.setCdevSdkParam(m_CdevSdkParam,this);
 	char const* descriptionString= "Media Presentation";
@@ -1211,14 +1238,14 @@ int CdevSdk::startRtspServer()
 	ServerMediaSession* sms = ServerMediaSession::createNew(*env, streamName, NULL,descriptionString,False);
 	char const* streamNameClientDemo = "mpeg4/ch01/main/av_stream";
 	ServerMediaSession* smsClientDemo = ServerMediaSession::createNew(*env, streamNameClientDemo, NULL,descriptionString,False);
-	OutPacketBuffer::maxSize = 300000; // allow for some possibly large H.264 frames
+	OutPacketBuffer::maxSize = 500000; // allow for some possibly large H.264 frames
 	sms->addSubsession(H264LiveVideoServerMediaSubssion::createNew(*env, reuseFirstSource,this));//修改为自己实现的H264LiveVideoServerMediaSubssion
-	OutPacketBuffer::maxSize = 300000; // allow for some possibly large H.264 frames
+	OutPacketBuffer::maxSize = 500000; // allow for some possibly large H.264 frames
 	smsClientDemo->addSubsession(H264LiveVideoServerMediaSubssion::createNew(*env, reuseFirstSource,this));//修改为自己实现的H264LiveVideoServerMediaSubssion
 	rtspServer->addServerMediaSession(sms);
 	rtspServer->addServerMediaSession(smsClientDemo);
-	announceStream(rtspServer, sms, streamName);//提示用户输入连接信息
-	announceStream(rtspServer, smsClientDemo, streamNameClientDemo);//提示用户输入连接信息
+	announceStream(rtspServer, sms, streamName,m_CdevSdkParam.m_CdevChannelDeviceParam.m_nPlatDevPort);//提示用户输入连接信息
+	announceStream(rtspServer, smsClientDemo, streamNameClientDemo,m_CdevSdkParam.m_CdevChannelDeviceParam.m_nPlatDevPort);//提示用户输入连接信息
 	try
 	{		
 		env->taskScheduler().doEventLoop(&m_watchVariable); //循环等待连接
@@ -1226,14 +1253,38 @@ int CdevSdk::startRtspServer()
 	catch(...)
 	{
 		m_rtspEndFlag=1;
-		g_logger.TraceInfo("env->taskScheduler().doEventLoop is %s\n",env->getResultMsg());
+		g_logger.TraceInfo("env->taskScheduler().doEventLoop is %s %d\n",env->getResultMsg(),m_watchVariable);
 	}
 	g_logger.TraceInfo("tcpserver:%d rtspServer:%d is stop--\n",m_CdevSdkParam.m_CdevChannelDeviceParam.m_nPlatDevPort,m_CdevSdkParam.m_CdevChannelDeviceParam.m_nRtspServerStartPort);
 	rtspServer->removeServerMediaSession(sms);  
 	rtspServer->removeServerMediaSession(smsClientDemo); 
     Medium::close(rtspServer);  
-    env->reclaim();  
-    delete scheduler; 
+    env->reclaim(); 
+	if(sms)
+	{
+		free(sms);
+		sms=NULL;
+	}
+	if(smsClientDemo)
+	{
+		free(smsClientDemo);
+		smsClientDemo=NULL;
+	}
+	if(rtspServer)
+	{
+		free(rtspServer);
+		smsClientDemo=NULL;
+	}
+	if(env)
+	{
+		free(env);
+		env=NULL;
+	}
+	if(scheduler)
+	{
+		free(scheduler);
+		scheduler=NULL;
+	}
 	return 0;
 }
 

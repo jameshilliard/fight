@@ -3,23 +3,23 @@
 #include "H264FramedLiveSource.hh"
 #include "H264VideoFileServerMediaSubsession.hh"
 #include "H264VideoStreamFramer.hh"
-
+#if 0
 #pragma comment(lib,"G:\\OnLineProject\\openSource\\live.2015.04.01\\live\\lib\\libBasicUsageEnvironment.lib")
 #pragma comment(lib,"G:\\OnLineProject\\openSource\\live.2015.04.01\\live\\lib\\libgroupsock.lib")
 #pragma comment(lib,"G:\\OnLineProject\\openSource\\live.2015.04.01\\live\\lib\\libliveMedia.lib")
 #pragma comment(lib,"G:\\OnLineProject\\openSource\\live.2015.04.01\\live\\lib\\libUsageEnvironment.lib")
 
-#if 0
+
 #pragma comment(lib,"G:\\OnLineProject\\openSource\\live.2015.06.09\\live\\lib\\libBasicUsageEnvironment.lib")
 #pragma comment(lib,"G:\\OnLineProject\\openSource\\live.2015.06.09\\live\\lib\\libgroupsock.lib")
 #pragma comment(lib,"G:\\OnLineProject\\openSource\\live.2015.06.09\\live\\lib\\libliveMedia.lib")
 #pragma comment(lib,"G:\\OnLineProject\\openSource\\live.2015.06.09\\live\\lib\\libUsageEnvironment.lib")
-
+#endif
 #pragma comment(lib,"D:\\WorkSpace\\openSource\\live.2015.04.01\\live\\lib\\libBasicUsageEnvironment.lib")
 #pragma comment(lib,"D:\\WorkSpace\\openSource\\live.2015.04.01\\live\\lib\\libgroupsock.lib")
 #pragma comment(lib,"D:\\WorkSpace\\openSource\\live.2015.04.01\\live\\lib\\libliveMedia.lib")
 #pragma comment(lib,"D:\\WorkSpace\\openSource\\live.2015.04.01\\live\\lib\\libUsageEnvironment.lib")
-#endif
+
 
 
 class H264LiveVideoServerMediaSubssion : public H264VideoFileServerMediaSubsession {
@@ -33,7 +33,9 @@ protected: // we're a virtual base class
 
 protected: // redefined virtual functions
 	FramedSource* createNewStreamSource(unsigned clientSessionId,unsigned& estBitrate);
-	//virtual char const* sdpLines(); 
+	#if 0
+	virtual char const* sdpLines(); 
+	#endif
 public:
 	CdevSdk *m_ptCdevSdk;
 	char fFileName[256];

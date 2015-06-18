@@ -161,7 +161,7 @@ void Logger::Trace(const char * strInfo)
 		}
 		//写日志信息到文件流
 		fprintf(m_pFileStream, "%s\r\n", strInfo);
-		//fflush(m_pFileStream);
+		fflush(m_pFileStream);
 		//离开临界区
 	}
 	//若发生异常，则先离开临界区，防止死锁

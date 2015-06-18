@@ -323,6 +323,8 @@ void CDevManager::StartUpateDeviceInfo()
 	strOnlineDeviceCodeHttpAddr.append(buf);
 	//http://60.12.220.24:81/ws/zyrh.asmx/GetOnlineDeviceCode  m_OnlineDeviceCodeHttpAddr
 
+	g_logger.TraceInfo("plserver start,version is %s",SOFT_VERSION);
+
 	while(m_bDevManagerStart)
 	{
 		std::string strOnlineDeviceRet="";
