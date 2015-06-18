@@ -16,7 +16,6 @@ void H264FramedLiveSource::setDeviceSource(CdevSdk *deviceSource)
 	if(deviceSource==NULL)
 		return;
 	m_ptCdevSdk = deviceSource;
-	m_ptCdevSdk->addDeviceSource(&m_h264Data);
 	m_ptCdevSdk->ReStartDev();
 }
 
@@ -33,28 +32,18 @@ H264FramedLiveSource::~H264FramedLiveSource()
 {
 	if(m_ptCdevSdk==NULL)
 		return;
-	m_ptCdevSdk->removeDeviceSource(&m_h264Data);
 }
 
 
 void H264FramedLiveSource::doGetNextFrame()
 {
-	unsigned int dataSize=0;
-	unsigned int frameSize=0;
-	int i=0;
 	bool bRet=true;
 	if(m_ptCdevSdk==NULL)
 		return;
-	//while(bRet)
-	{
-		
-		bRet=m_ptCdevSdk->GetVideoData(&m_h264Data,fTo+dataSize,frameSize,fMaxSize-dataSize,m_curVideoIndex);
-		dataSize+=frameSize;
-	}
-	fFrameSize=dataSize;
+	bRet=m_ptCdevSdk->GetVideoData(fTo,fFrameSize,fMaxSize,fNumTruncatedBytes,m_curVideoIndex);
 	if(fFrameSize==0)
 	{
-		Sleep(100);
+		//Sleep(10);
 	}
 	nextTask() = envir().taskScheduler().scheduleDelayedTask(0,(TaskFunc*)FramedSource::afterGetting, this);//表示延迟0秒后再执行 afterGetting 函数
 	return;

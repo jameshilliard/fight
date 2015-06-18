@@ -22,7 +22,6 @@ private:
 	
 protected:
 	unsigned int 				m_curVideoIndex;
-	std::vector<std::string > 	m_h264Data;
 	
 public:
 	CdevSdk 		*m_ptCdevSdk;

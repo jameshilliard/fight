@@ -13,5 +13,5 @@
 using namespace std;
 #include "Logger.h"
 
-
+#define SOFT_VERSION	"1.0.0000"
 // TODO: 在此处引用程序需要的其他头文件

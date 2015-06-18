@@ -193,9 +193,14 @@ bool CHTTPClient::HttpPost(const std::string & strUrl,char* buf,int length,std::
 	bool loop = true;
 	bool bHeader = false;
 	std::string message;
+	Sleep(100);
 	while(loop) {
 		l = recv(sock, c1, 1, 0);
-		if(l<0) loop = false;
+		if(l<0) 
+		{
+			loop = false;
+			return false;
+		}
 		if(c1[0]=='\n') {
 			if(line_length == 0) 
 			{

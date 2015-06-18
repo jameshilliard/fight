@@ -40,12 +40,15 @@ int CDevManager::AddNewDev(CdevSdkParam mCdevSdkParam)
 	boost::asio::detail::mutex::scoped_lock lock(mutex_);
 	if (!GetDev(mCdevSdkParam.m_sDevId,mCdevSdkParam.m_CdevChannelDeviceParam.m_nChannelNo))
 	{
+		if(mCdevSdkParam.m_CdevChannelDeviceParam.m_nPlatDevPort!=8025)
+			return -1;
 		boost::shared_ptr<CdevSdk> devPtr(new CdevSdk);
 		mCdevSdkParam.m_CdevChannelDeviceParam.m_nRtspServerStartPort=m_nRtspServerStartPort;
 		m_DevList.AddData(GetDevIdkey(mCdevSdkParam.m_sDevId,mCdevSdkParam.m_CdevChannelDeviceParam.m_nChannelNo),devPtr);
 		m_DevListIndex.AddData(devPtr->m_nIndex,devPtr);
 		mCdevSdkParam.m_CdevChannelDeviceParam.m_nRtspServerStartPort=m_nRtspServerStartPort;
 		m_nRtspServerStartPort++;
+		
 		return devPtr->StartDev(mCdevSdkParam);
 	}
 	else
@@ -324,16 +327,16 @@ void CDevManager::StartUpateDeviceInfo()
 	//http://60.12.220.24:81/ws/zyrh.asmx/GetOnlineDeviceCode  m_OnlineDeviceCodeHttpAddr
 
 	g_logger.TraceInfo("plserver start,version is %s",SOFT_VERSION);
-
+	bool bRet=false;
 	while(m_bDevManagerStart)
 	{
 		std::string strOnlineDeviceRet="";
-		sHttpClient.HttpPost(strOnlineDeviceCodeHttpAddr,"",0,strOnlineDeviceRet);
-		if(!strOnlineDeviceRet.empty())
+		bRet=sHttpClient.HttpPost(strOnlineDeviceCodeHttpAddr,"",0,strOnlineDeviceRet);
+		if(!strOnlineDeviceRet.empty() && bRet)
 		{
 			std::string strRet="";
-			sHttpClient.HttpPost(strDeviceInfoHttpAddr,"strDevCodeList=",strlen("strDevCodeList="),strRet);
-			if(!strRet.empty())
+			bRet=sHttpClient.HttpPost(strDeviceInfoHttpAddr,"strDevCodeList=",strlen("strDevCodeList="),strRet);
+			if(!strRet.empty() && bRet)
 			{
 				//if(strOnlineDeviceRet.find("string")!=string::npos)
 					//printf("---%s---\n",strOnlineDeviceRet.c_str());

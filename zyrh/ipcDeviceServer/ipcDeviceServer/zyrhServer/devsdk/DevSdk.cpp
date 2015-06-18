@@ -519,16 +519,16 @@ int CdevSdk::StartDev(CdevSdkParam cdevSdkParam)
 	m_DeviceServer.stop();
 	//stopRtspServerThread();
 	//Sleep(200);
+	if (m_wmp_handle != -1)
+	{
+		StopPlay();
+	}
 	if(m_CdevSdkParam.m_isChannelEnable==1)
 	{
 		m_DeviceServer.start();
 		StartRtspServerThread();
 		m_rtsp_timer_Ptr->expires_from_now(boost::posix_time::seconds(5));
 		m_rtsp_timer_Ptr->async_wait(boost::bind(&CdevSdk::RtspOnTime,shared_from_this(),boost::asio::placeholders::error));
-	}
-	else
-	{
-		StopPlay();
 	}
 	return 0;
 }
@@ -573,19 +573,15 @@ bool CdevSdk::StartDev()
 bool CdevSdk::ReStartDev()
 {
 	boost::asio::detail::mutex::scoped_lock lock(mutex_Lock);
-	int size=m_deviceSource.size();
 	if (m_wmp_handle != -1)
 	{
-		if((time(NULL) - m_rtspTime) < 6 && m_rtspTime!=0)
+		if((time(NULL) - m_rtspTime) < 3 && m_rtspTime!=0)
 		{
+			m_rtspTime=time(NULL);
 			return true;
 		}
-		m_rtspTime=time(NULL);
 	}
-	for (int i=0; i<size; i++)
-	{
-		m_deviceSource[i]->clear();
-	}
+	m_deviceSource.clear();
 	if(m_CdevSdkParam.m_isOnline==0 || m_CdevSdkParam.m_isChannelEnable==0)
 	{
 		if(m_CdevSdkParam.m_isOnline!=m_LastCdevSdkParam.m_isOnline || m_CdevSdkParam.m_isChannelEnable!=m_LastCdevSdkParam.m_isChannelEnable)
@@ -628,6 +624,7 @@ bool CdevSdk::ReStartDev()
 	{
 		return false;
 	}	
+	m_rtspTime=time(NULL);
 	return true;
 }
 void CdevSdk::ResetParam()
@@ -743,123 +740,37 @@ void CdevSdk::StopPlay()
 	g_logger.TraceInfo("πÿ±’…Ë±∏ m_nAnalyzeHandle %d devid:%s",m_nAnalyzeHandle,m_sDevId.c_str());
 
 }
-bool CdevSdk::addDeviceSource(std::vector<std::string > *vDeviceSource)
+bool CdevSdk::GetVideoData(unsigned char *ptData,unsigned int &fFrameSize,unsigned int dataMaxSize,unsigned int &fNumTruncatedBytes,unsigned int &curVideoIndex)
 {
+	int frameSize=0;
 	boost::asio::detail::mutex::scoped_lock lock(mutex_HandleVideo);
-	if(m_deviceSource.size()>10)
-		return false;
-	m_deviceSource.push_back(vDeviceSource);
-	return true;
-}
-bool CdevSdk::removeDeviceSource(std::vector<std::string > *vDeviceSource)
-{
-	unsigned int i=0;
-	boost::asio::detail::mutex::scoped_lock lock(mutex_HandleVideo);
-	for (i=0; i<m_deviceSource.size(); i++)
+	if(!m_deviceSource.empty())
 	{
-		if(m_deviceSource[i]==vDeviceSource)
+		std::vector<std::string >::iterator it=m_deviceSource.begin();
+		frameSize=it->length();
+		//printf("tcp %d:rtsp:%d,this time:%d %d,this 0x%x,fFrameSize 1 is %d--%d-%d-\n",m_CdevSdkParam.m_CdevChannelDeviceParam.m_nPlatDevPort,m_CdevSdkParam.m_CdevChannelDeviceParam.m_nRtspServerStartPort,GetTickCount(),m_deviceSource.size(),this,frameSize,curVideoIndex,dataMaxSize);
+		if(frameSize>dataMaxSize)
 		{
-			m_deviceSource.erase(m_deviceSource.begin()+i);
-			return true;
-		}
-
-	}
-	return false;
-}
-bool CdevSdk::GetVideoData(std::vector<std::string > *vDeviceSource,unsigned char *ptData,unsigned int &frameSize,unsigned int dataMaxSize,unsigned int &curVideoIndex)
-{
-	unsigned int i=0;
-	bool bFindFlag=false;
-	{
-		boost::asio::detail::mutex::scoped_lock lock(mutex_HandleVideo);
-		for (i=0; i<m_deviceSource.size(); i++)
-		{
-			if(m_deviceSource[i]==vDeviceSource)
-			{
-				bFindFlag=true;
-			}
-		}
-	}
-	if(bFindFlag)
-	{
-		unsigned int timeOut=0;
-		//if(vDeviceSource->empty())
-		//{
-		//	do
-		//	{
-		//		Sleep(100);
-		//		timeOut++;
-		//		if(timeOut>3)
-		//			break;
-		//		bFindFlag=vDeviceSource->empty();
-		//	}
-		//	while(bFindFlag);
-		//}
-		boost::asio::detail::mutex::scoped_lock lock(mutex_HandleVideo);
-		if(!vDeviceSource->empty())
-		{
-			std::vector<std::string >::iterator it=vDeviceSource->begin();
-			frameSize=it->length();
-			//printf("this time:%d %d,this 0x%x,fFrameSize 1 is %d--%d-%d-\n",GetTickCount(),vDeviceSource->size(),this,frameSize,curVideoIndex,dataMaxSize);
-			if(curVideoIndex!=0)
-			{	
-				frameSize=frameSize-curVideoIndex;
-			}
-			if(frameSize<=dataMaxSize)
-			{
-				memcpy(ptData,it->c_str()+curVideoIndex,frameSize);
-				curVideoIndex=0;
-			}	
-			else if(dataMaxSize>0)
-			{	
-				memcpy(ptData,it->c_str()+curVideoIndex,dataMaxSize);
-				frameSize=dataMaxSize;
-				curVideoIndex=curVideoIndex+dataMaxSize;
-			}
-			if(curVideoIndex==0)
-			{
-				vDeviceSource->erase(it);
-#if 0
-				int tempFrameSize=0;
-				for(int i=1;i<200;i++)
-				{
-					if(!vDeviceSource->empty())
-					{
-						it=vDeviceSource->begin();
-						tempFrameSize=it->length();
-						if(tempFrameSize<=(dataMaxSize-frameSize))
-						{
-							memcpy(ptData+frameSize,it->c_str(),tempFrameSize);
-							frameSize=frameSize+tempFrameSize;
-							vDeviceSource->erase(it);
-						}
-						else
-						{
-							break;
-						}
-					}
-					else
-					{
-						break;
-					}
-						
-				}
-#endif
-				return true;
-			}
-			else
-				return false;
-
-		}
+			memcpy(ptData,it->c_str(),dataMaxSize);
+			fFrameSize=dataMaxSize;
+			fNumTruncatedBytes=frameSize-dataMaxSize;
+			curVideoIndex=0;
+		}	
 		else
-		{
-			frameSize=0;
-			return false;
+		{	
+			memcpy(ptData,it->c_str(),frameSize);
+			fFrameSize=frameSize;
+			fNumTruncatedBytes=0;
 		}
+		m_deviceSource.erase(it);
+		return true;
 	}
 	else
+	{
+		fFrameSize=0;
+		fNumTruncatedBytes=0;
 		return false;
-	
+	}	
 }
 
 std::string CdevSdk::CreateM3u8File()
@@ -1012,23 +923,21 @@ void CdevSdk::handleAudioAac(uint8_t* aacbuf,uint32_t bufsize,__int64 timeStamp,
 void CdevSdk::handleVideo(uint8_t* vidoebuf,uint32_t bufsize,__int64 TimeStamp,bool bkey)
 {
 	unsigned int getVideoFlag=1;
-	unsigned int i=0,size=0;
-	boost::asio::detail::mutex::scoped_lock lock(mutex_HandleVideo);
-	m_rtspTime=time(NULL);
+	unsigned int size=0;
 	std::string temp((char *)vidoebuf,bufsize);
-	size=m_deviceSource.size();
-	for (i=0; i<size; i++)
+	m_rtspTime=time(NULL);
 	{
-		if(m_deviceSource[i]->size()<200)
+		boost::asio::detail::mutex::scoped_lock lock(mutex_HandleVideo);
+		size=m_deviceSource.size();
+		if(size<200)
 		{
-			m_deviceSource[i]->push_back(temp);
+			m_deviceSource.push_back(temp);
 			getVideoFlag=0;
 		}
-		else
-		{
-			g_logger.TraceInfo("this 0x%x,insert data size is %d stask %d\n",this,temp.length(),m_deviceSource[i]->size());
-			m_deviceSource[i]->clear();
-		}
+	}
+	if(size>=200)
+	{
+		g_logger.TraceInfo("tcp %d,rtsp %d,insert data size is %d stask %d\n",m_CdevSdkParam.m_CdevChannelDeviceParam.m_nPlatDevPort,m_CdevSdkParam.m_CdevChannelDeviceParam.m_nRtspServerStartPort,temp.length(),m_deviceSource.size());
 	}
 	if(getVideoFlag==1)
 	{
@@ -1037,7 +946,6 @@ void CdevSdk::handleVideo(uint8_t* vidoebuf,uint32_t bufsize,__int64 TimeStamp,b
 			StopPlay();
 		}
 	}
-		
 	//m_pM3u8List.handleVideo(vidoebuf,bufsize,TimeStamp,bkey);
 	//if(m_nType&0x01)
 	{
@@ -1259,32 +1167,10 @@ int CdevSdk::startRtspServer()
 	rtspServer->removeServerMediaSession(sms);  
 	rtspServer->removeServerMediaSession(smsClientDemo); 
     Medium::close(rtspServer);  
-    env->reclaim(); 
-	if(sms)
-	{
-		free(sms);
-		sms=NULL;
-	}
-	if(smsClientDemo)
-	{
-		free(smsClientDemo);
-		smsClientDemo=NULL;
-	}
-	if(rtspServer)
-	{
-		free(rtspServer);
-		smsClientDemo=NULL;
-	}
-	if(env)
-	{
-		free(env);
-		env=NULL;
-	}
-	if(scheduler)
-	{
-		free(scheduler);
-		scheduler=NULL;
-	}
+    env->reclaim();
+	env = NULL;
+	delete scheduler; 
+	scheduler = NULL;
 	return 0;
 }
 

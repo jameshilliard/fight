@@ -42,9 +42,9 @@ public:
 	int CmdPtzControl(std::string sdevid,unsigned int nchannel,int ptz_type,int ptz_cmd,int action,int param,std::string& smsg );
 
 	//zss++
-	bool GetVideoData(std::vector<std::string > *vDeviceSource,unsigned char *ptData,unsigned int &frameSize,unsigned int dataMaxSize,unsigned int &curVideoIndex);
-	bool addDeviceSource(std::vector<std::string > *vDeviceSource);
-	bool removeDeviceSource(std::vector<std::string > *vDeviceSource);
+	bool GetVideoData(unsigned char *ptData,unsigned int &frameSize,unsigned int dataMaxSize,unsigned int &fNumTruncatedBytes,unsigned int &curVideoIndex);
+	//bool addDeviceSource(std::vector<std::string > *vDeviceSource);
+	//bool removeDeviceSource(std::vector<std::string > *vDeviceSource);
 	void CdevSdk::runRtspServerActivity();
 	int  CdevSdk::startRtspServer();
 	void CdevSdk::stopRtspServerThread();
@@ -85,7 +85,7 @@ public:
 	boost::asio::detail::mutex mutex_Lock;
 	boost::asio::detail::mutex mutex_HandleVideo;
 	
-	std::vector<std::vector<std::string > *> m_deviceSource;
+	std::vector<std::string > m_deviceSource;
 private:
 	int m_nTimeNow;
 
