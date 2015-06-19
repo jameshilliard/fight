@@ -508,7 +508,7 @@ int CdevSdk::StartDev(CdevSdkParam cdevSdkParam)
 	m_nServerPort = cdevSdkParam.m_nSdkServerPort;
 	m_nServerLine = cdevSdkParam.m_nServerLine;
 	m_spassword = cdevSdkParam.m_spassword;
-	m_nDevLine = cdevSdkParam.m_nDevLine;;
+	m_nDevLine = cdevSdkParam.m_nDevLine;
 	m_nnchannel = cdevSdkParam.m_CdevChannelDeviceParam.m_nChannelNo;
 	m_sDevId = cdevSdkParam.m_sDevId;
 	m_pM3u8List.m_sdveid = cdevSdkParam.m_sDevId;
@@ -612,14 +612,19 @@ bool CdevSdk::ReStartDev()
 	{
 		return false;
 	}
+	unsigned int stream_type=0;
+	if(m_CdevSdkParam.m_CdevChannelDeviceParam.m_nStreamType==0)
+		stream_type=1;
+	else
+		stream_type=2;
 	ret = WMP_Play(m_wmp_handle,
 		m_sDevId.c_str(),//devid:设备ID
 		m_nnchannel,//channel:设备通道号
-		WMP_STREAM_SUB, //stream_type:WMP_STREAM_MAIN 1-主码流   WMP_STREAM_SUB 2-子码流 
+		stream_type, //stream_type:WMP_STREAM_MAIN 1-主码流   WMP_STREAM_SUB 2-子码流 
 		WMP_TRANS_UDP,//trans_mode:WMP_TRANS_TCP/WMP_TRANS_UDP  #define WMP_TRANS_TCP	1#define WMP_TRANS_UDP	2
 		m_nDevLine,//dev_line:设备线路号
 		CBF_OnStreamPlay, this,(int *)&m_stream_handle);
-	g_logger.TraceInfo("sdk 控制端口:%d rtsp服务端口:%d 重新取流 设备ID:%s 设备通道号:%d,设备线路号:%d,m_wmp_handle:%d,取流返回:%d ",m_CdevSdkParam.m_CdevChannelDeviceParam.m_nPlatDevPort,m_CdevSdkParam.m_CdevChannelDeviceParam.m_nRtspServerStartPort,m_sDevId.c_str(),m_nnchannel,m_nDevLine,m_wmp_handle,ret);
+	g_logger.TraceInfo("sdk 控制端口:%d rtsp服务端口:%d 重新取流 设备ID:%s 设备通道号:%d,设备线路号:%d,m_wmp_handle:%d,主次码流:%d,取流返回:%d ",m_CdevSdkParam.m_CdevChannelDeviceParam.m_nPlatDevPort,m_CdevSdkParam.m_CdevChannelDeviceParam.m_nRtspServerStartPort,m_sDevId.c_str(),m_nnchannel,m_nDevLine,m_wmp_handle,stream_type,ret);
 		
 	if (ret != 0)
 	{
