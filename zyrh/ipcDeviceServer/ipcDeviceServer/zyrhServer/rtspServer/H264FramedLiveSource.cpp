@@ -43,7 +43,7 @@ void H264FramedLiveSource::doGetNextFrame()
 	bRet=m_ptCdevSdk->GetVideoData(fTo,fFrameSize,fMaxSize,fNumTruncatedBytes,m_curVideoIndex);
 	if(fFrameSize==0)
 	{
-		//Sleep(10);
+		Sleep(20);
 	}
 	nextTask() = envir().taskScheduler().scheduleDelayedTask(0,(TaskFunc*)FramedSource::afterGetting, this);//表示延迟0秒后再执行 afterGetting 函数
 	return;
