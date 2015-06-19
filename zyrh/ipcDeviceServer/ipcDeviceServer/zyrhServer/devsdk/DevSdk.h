@@ -84,7 +84,7 @@ public:
 	int m_nSystem_Format;
 	boost::asio::detail::mutex mutex_Lock;
 	boost::asio::detail::mutex mutex_HandleVideo;
-	
+	bool m_firstKey;
 	std::vector<std::string > m_deviceSource;
 private:
 	int m_nTimeNow;

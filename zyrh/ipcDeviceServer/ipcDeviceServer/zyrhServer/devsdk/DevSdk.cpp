@@ -390,7 +390,7 @@ CdevSdk::CdevSdk()
 	m_rtsp_timer_Ptr.reset(new boost::asio::deadline_timer(_RtspService) );
 	m_pRtspService = &_RtspService;
 
-	
+	m_firstKey=true;
 	m_bStop = false;
 	//m_nServerLine=0;
 
@@ -582,6 +582,7 @@ bool CdevSdk::ReStartDev()
 		}
 	}
 	m_deviceSource.clear();
+	m_firstKey=true;
 	if(m_CdevSdkParam.m_isOnline==0 || m_CdevSdkParam.m_isChannelEnable==0)
 	{
 		if(m_CdevSdkParam.m_isOnline!=m_LastCdevSdkParam.m_isOnline || m_CdevSdkParam.m_isChannelEnable!=m_LastCdevSdkParam.m_isChannelEnable)
@@ -614,7 +615,7 @@ bool CdevSdk::ReStartDev()
 	ret = WMP_Play(m_wmp_handle,
 		m_sDevId.c_str(),//devid:设备ID
 		m_nnchannel,//channel:设备通道号
-		WMP_STREAM_MAIN, //stream_type:WMP_STREAM_MAIN 1-主码流   WMP_STREAM_SUB 2-子码流 
+		WMP_STREAM_SUB, //stream_type:WMP_STREAM_MAIN 1-主码流   WMP_STREAM_SUB 2-子码流 
 		WMP_TRANS_UDP,//trans_mode:WMP_TRANS_TCP/WMP_TRANS_UDP  #define WMP_TRANS_TCP	1#define WMP_TRANS_UDP	2
 		m_nDevLine,//dev_line:设备线路号
 		CBF_OnStreamPlay, this,(int *)&m_stream_handle);
@@ -922,29 +923,29 @@ void CdevSdk::handleAudioAac(uint8_t* aacbuf,uint32_t bufsize,__int64 timeStamp,
 }
 void CdevSdk::handleVideo(uint8_t* vidoebuf,uint32_t bufsize,__int64 TimeStamp,bool bkey)
 {
-	unsigned int getVideoFlag=1;
 	unsigned int size=0;
 	std::string temp((char *)vidoebuf,bufsize);
 	m_rtspTime=time(NULL);
 	{
+		//printf("m_firstKey=%d ---bkey=%d---------\n",m_firstKey,bkey);
 		boost::asio::detail::mutex::scoped_lock lock(mutex_HandleVideo);
-		size=m_deviceSource.size();
-		if(size<200)
+		if((m_firstKey==true && bkey==true) || m_firstKey==false)
 		{
-			m_deviceSource.push_back(temp);
-			getVideoFlag=0;
+			m_firstKey=false;
+			size=m_deviceSource.size();
+			if(size<200)
+			{
+				m_deviceSource.push_back(temp);
+			}
 		}
 	}
 	if(size>=200)
-	{
-		g_logger.TraceInfo("tcp %d,rtsp %d,insert data size is %d stask %d\n",m_CdevSdkParam.m_CdevChannelDeviceParam.m_nPlatDevPort,m_CdevSdkParam.m_CdevChannelDeviceParam.m_nRtspServerStartPort,temp.length(),m_deviceSource.size());
-	}
-	if(getVideoFlag==1)
 	{
 		if (m_wmp_handle != -1)
 		{
 			StopPlay();
 		}
+		g_logger.TraceInfo("tcp %d,rtsp %d,insert data size is %d stask %d\n",m_CdevSdkParam.m_CdevChannelDeviceParam.m_nPlatDevPort,m_CdevSdkParam.m_CdevChannelDeviceParam.m_nRtspServerStartPort,temp.length(),m_deviceSource.size());
 	}
 	//m_pM3u8List.handleVideo(vidoebuf,bufsize,TimeStamp,bkey);
 	//if(m_nType&0x01)

