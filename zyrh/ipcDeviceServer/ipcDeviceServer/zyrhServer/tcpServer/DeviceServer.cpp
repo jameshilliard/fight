@@ -174,6 +174,8 @@ STATUS DeviceServerConnection::reloveOnePacket(StreamSocket  &connfd,char *recvb
 	case NETCMD_GET_RTSPPORT:
 		NET_INFO(("NETCMD_GET_RTSPOLDCFG.\n"));
 		retVal = netClientGetRtspPort(connfd, recvbuff, pClientSockAddr,param);
+		if(m_nCdevSdk!=NULL)
+			m_nCdevSdk->ReStartDev();
 		break;
 	case NETCMD_GET_COMPRESSCFG_V30:   /*get compress config param*/
 		NET_INFO(("NETCMD_GET_COMPRESSCFG_V30.\n"));
@@ -357,6 +359,7 @@ void DeviceServer::start()
 void DeviceServer::stop()
 {
 	m_commServerStart=false;
+	Sleep(200);
 	m_commServerThread->StopThread();
 }
 

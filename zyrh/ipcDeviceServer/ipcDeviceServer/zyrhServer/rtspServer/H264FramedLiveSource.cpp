@@ -16,7 +16,7 @@ void H264FramedLiveSource::setDeviceSource(CdevSdk *deviceSource)
 	if(deviceSource==NULL)
 		return;
 	m_ptCdevSdk = deviceSource;
-	m_ptCdevSdk->ReStartDev();
+	//m_ptCdevSdk->ReStartDev();
 }
 
 H264FramedLiveSource* H264FramedLiveSource::createNew(UsageEnvironment& env, CdevSdk *ptCdevSdk, unsigned preferredFrameSize, unsigned playTimePerFrame)
@@ -32,6 +32,7 @@ H264FramedLiveSource::~H264FramedLiveSource()
 {
 	if(m_ptCdevSdk==NULL)
 		return;
+	//m_ptCdevSdk->StopPlay();
 }
 
 
@@ -44,6 +45,7 @@ void H264FramedLiveSource::doGetNextFrame()
 	if(fFrameSize==0)
 	{
 		Sleep(20);
+		bRet=m_ptCdevSdk->GetVideoData(fTo,fFrameSize,fMaxSize,fNumTruncatedBytes,m_curVideoIndex);
 	}
 	nextTask() = envir().taskScheduler().scheduleDelayedTask(0,(TaskFunc*)FramedSource::afterGetting, this);//表示延迟0秒后再执行 afterGetting 函数
 	return;

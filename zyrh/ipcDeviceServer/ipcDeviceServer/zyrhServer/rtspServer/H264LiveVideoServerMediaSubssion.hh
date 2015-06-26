@@ -4,12 +4,18 @@
 #include "H264VideoFileServerMediaSubsession.hh"
 #include "H264VideoStreamFramer.hh"
 
+#pragma comment(lib,"G:\\OnLineProject\\openSource\\live.2015.06.25\\live\\lib\\libBasicUsageEnvironment.lib")
+#pragma comment(lib,"G:\\OnLineProject\\openSource\\live.2015.06.25\\live\\lib\\libgroupsock.lib")
+#pragma comment(lib,"G:\\OnLineProject\\openSource\\live.2015.06.25\\live\\lib\\libliveMedia.lib")
+#pragma comment(lib,"G:\\OnLineProject\\openSource\\live.2015.06.25\\live\\lib\\libUsageEnvironment.lib")
+
+#if 0
 #pragma comment(lib,"G:\\OnLineProject\\openSource\\live.2015.04.01\\live\\lib\\libBasicUsageEnvironment.lib")
 #pragma comment(lib,"G:\\OnLineProject\\openSource\\live.2015.04.01\\live\\lib\\libgroupsock.lib")
 #pragma comment(lib,"G:\\OnLineProject\\openSource\\live.2015.04.01\\live\\lib\\libliveMedia.lib")
 #pragma comment(lib,"G:\\OnLineProject\\openSource\\live.2015.04.01\\live\\lib\\libUsageEnvironment.lib")
 
-#if 0
+
 #pragma comment(lib,"G:\\OnLineProject\\openSource\\live.2015.06.09\\live\\lib\\libBasicUsageEnvironment.lib")
 #pragma comment(lib,"G:\\OnLineProject\\openSource\\live.2015.06.09\\live\\lib\\libgroupsock.lib")
 #pragma comment(lib,"G:\\OnLineProject\\openSource\\live.2015.06.09\\live\\lib\\libliveMedia.lib")

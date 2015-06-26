@@ -50,11 +50,12 @@ public:
 	void CdevSdk::stopRtspServerThread();
 	void CdevSdk::StartRtspServerThread();
 	void RtspOnTime(const boost::system::error_code& e);
+	void StopPlay();
 	//zss--
 private:
 	void ResetParam();
 	WMP_HANDLE m_wmp_handle;
-	void StopPlay();
+	
 	
 public:
 	char* m_h264Buf;
@@ -119,11 +120,15 @@ public:
 	//zss++
 	CThread m_rtspServerThread;
 	bool	m_rtspServerStart;
+	bool    m_restartSDKFlag;
+	unsigned int m_nLastPlatDevPort;
+	unsigned int m_lastFrameSize;
+	unsigned int m_lastTrute;
 	CdevSdkParam m_CdevSdkParam;
 	CdevSdkParam m_LastCdevSdkParam;
 	char	m_watchVariable;
 	char	m_rtspEndFlag;
 	DeviceServer m_DeviceServer;
-	time_t  m_rtspTime;
+	DWORD  m_rtspTime;
 	//zss--
 };

@@ -7,7 +7,7 @@
 using Poco::Net::StreamSocket;
 
 #define 	SerialNo			"ZY20141120CCCH490402389"
-#define 	DevType				0	
+#define 	DevType				31	
 #define 	DevName				"IPCAMERA"
 #define 	ChannelNums			1
 #define  	FirstChanNo			1
