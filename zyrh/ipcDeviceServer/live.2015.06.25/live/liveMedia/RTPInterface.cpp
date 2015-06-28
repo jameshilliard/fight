@@ -25,10 +25,11 @@ along with this library; if not, write to the Free Software Foundation, Inc.,
 #include <stdio.h>
 
 ////////// Helper Functions - Definition //////////
-//#define DEBUG_SEND //zss++
+
 // Helper routines and data structures, used to implement
 // sending/receiving RTP/RTCP over a TCP socket:
-
+// #define DEBUG_SEND //zss++
+// #define DEBUG_RECEIVE
 // Reading RTP-over-TCP is implemented using two levels of hash tables.
 // The top-level hash table maps TCP socket numbers to a
 // "SocketDescriptor" that contains a hash table for each of the
@@ -311,8 +312,8 @@ void RTPInterface::stopNetworkReading() {
 Boolean RTPInterface::sendRTPorRTCPPacketOverTCP(u_int8_t* packet, unsigned packetSize,
 						 int socketNum, unsigned char streamChannelId) {
 #ifdef DEBUG_SEND
-  fprintf(stderr, "sendRTPorRTCPPacketOverTCP: %d bytes over channel %d (socket %d)\n",
-	  packetSize, streamChannelId, socketNum); fflush(stderr);
+  fprintf(stderr, "sendRTPorRTCPPacketOverTCP %d: %d bytes over channel %d (socket %d)\n",
+	  GetTickCount(),packetSize, streamChannelId, socketNum); fflush(stderr);
 #endif
   // Send a RTP/RTCP packet over TCP, using the encoding defined in RFC 2326, section 10.12:
   //     $<streamChannelId><packetSize><packet>
@@ -325,11 +326,11 @@ Boolean RTPInterface::sendRTPorRTCPPacketOverTCP(u_int8_t* packet, unsigned pack
     framingHeader[1] = streamChannelId;
     framingHeader[2] = (u_int8_t) ((packetSize&0xFF00)>>8);
     framingHeader[3] = (u_int8_t) (packetSize&0xFF);
-    if (!sendDataOverTCP(socketNum, framingHeader, 4, False)) break;
-
+    //if (!sendDataOverTCP(socketNum, framingHeader, 4, False)) break; //zss++
+	if (!sendDataOverTCP(socketNum, framingHeader, 4, True)) break; //zss++
     if (!sendDataOverTCP(socketNum, packet, packetSize, True)) break;
 #ifdef DEBUG_SEND
-    fprintf(stderr, "sendRTPorRTCPPacketOverTCP: completed\n"); fflush(stderr);
+    fprintf(stderr, "sendRTPorRTCPPacketOverTCP %d: completed\n", GetTickCount()); fflush(stderr);
 #endif
 
     return True;
@@ -350,8 +351,8 @@ Boolean RTPInterface::sendDataOverTCP(int socketNum, u_int8_t const* data, unsig
   if (sendResult < (int)dataSize) {
     // The TCP send() failed - at least partially.
 
-    unsigned numBytesSentSoFar = sendResult < 0 ? 0 : (unsigned)sendResult;
-    if (numBytesSentSoFar > 0 || (forceSendToSucceed && envir().getErrno() == EAGAIN)) {
+    unsigned numBytesSentSoFar = sendResult < 0 ? 0 : (unsigned)sendResult;  //zss++#define EAGAIN WSAEWOULDBLOCK 10035
+    if (numBytesSentSoFar > 0 || (forceSendToSucceed && envir().getErrno() == EAGAIN) || (forceSendToSucceed && envir().getErrno() == 10035)) {
       // The OS's TCP send buffer has filled up (because the stream's bitrate has exceeded
       // the capacity of the TCP connection!).
       // Force this data write to succeed, by blocking if necessary until it does:
@@ -379,6 +380,9 @@ Boolean RTPInterface::sendDataOverTCP(int socketNum, u_int8_t const* data, unsig
     } else if (sendResult < 0) {
       // Because the "send()" call failed, assume that the socket is now unusable, so stop
       // using it (for both RTP and RTCP):
+#ifdef DEBUG_SEND
+	fprintf(stderr, "sendDataOverTCP: dataSize=%d sendResul %d terror %d",dataSize,sendResult,envir().getErrno()); fflush(stderr);
+#endif
       removeStreamSocket(socketNum, 0xFF);
     }
 

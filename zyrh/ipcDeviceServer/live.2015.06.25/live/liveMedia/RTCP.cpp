@@ -116,7 +116,7 @@ static double dTimeNow() {
     return (double) (timeNow.tv_sec + timeNow.tv_usec/1000000.0);
 }
 
-static unsigned const maxRTCPPacketSize = 1440;//zss++1456
+static unsigned const maxRTCPPacketSize = 1456;//zss++1456 1440
 	// bytes (1500, minus some allowance for IP, UDP, UMTP headers)
 static unsigned const preferredRTCPPacketSize = 1000; // bytes
 
@@ -843,6 +843,7 @@ void RTCPInstance::sendReport() {
 #ifdef DEBUG
   fprintf(stderr, "sending REPORT\n");
 #endif
+	return; //zss++
   // Begin by including a SR and/or RR report:
   if (!addReport()) return;
 

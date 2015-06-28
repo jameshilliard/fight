@@ -342,7 +342,7 @@ void MultiFramedRTPSource::networkReadHandler1() {
 
 ////////// BufferedPacket and BufferedPacketFactory implementation /////
 
-#define MAX_PACKET_SIZE 200000  //zss++  65536
+#define MAX_PACKET_SIZE  65536 //zss++   500000
 
 BufferedPacket::BufferedPacket()
   : fPacketSize(MAX_PACKET_SIZE),

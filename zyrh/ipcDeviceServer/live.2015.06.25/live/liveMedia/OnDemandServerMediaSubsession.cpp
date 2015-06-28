@@ -534,7 +534,7 @@ void StreamState
   if (fRTCPInstance != NULL) {
     // Hack: Send an initial RTCP "SR" packet, before the initial RTP packet, so that receivers will (likely) be able to
     // get RTCP-synchronized presentation times immediately:
-    //zss++fRTCPInstance->sendReport();
+    fRTCPInstance->sendReport();
   }
 
   if (!fAreCurrentlyPlaying && fMediaSource != NULL) {
