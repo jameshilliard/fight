@@ -21,7 +21,7 @@ private:
 	
 	
 protected:
-	unsigned int 				m_curVideoIndex;
+	unsigned int 				m_lelfPackNums;
 	
 public:
 	CdevSdk 		*m_ptCdevSdk;

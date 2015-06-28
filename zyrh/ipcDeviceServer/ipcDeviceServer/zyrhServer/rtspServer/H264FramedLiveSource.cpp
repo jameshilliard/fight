@@ -8,7 +8,7 @@ H264FramedLiveSource::H264FramedLiveSource(UsageEnvironment& env,CdevSdk *ptCdev
 	//Framed_databuf = databuf;//数据区指针
 	//Framed_dosent = dosent;//发送标示
 	m_ptCdevSdk=ptCdevSdk;
-	m_curVideoIndex=0;
+	m_lelfPackNums=0;
 }
 
 void H264FramedLiveSource::setDeviceSource(CdevSdk *deviceSource)
@@ -16,7 +16,9 @@ void H264FramedLiveSource::setDeviceSource(CdevSdk *deviceSource)
 	if(deviceSource==NULL)
 		return;
 	m_ptCdevSdk = deviceSource;
-	//m_ptCdevSdk->ReStartDev();
+	m_ptCdevSdk->ReStartDev();
+	m_ptCdevSdk->GetKeyFrame();
+	printf("start frame source is 0x%x---\n",this);
 }
 
 H264FramedLiveSource* H264FramedLiveSource::createNew(UsageEnvironment& env, CdevSdk *ptCdevSdk, unsigned preferredFrameSize, unsigned playTimePerFrame)
@@ -39,15 +41,23 @@ H264FramedLiveSource::~H264FramedLiveSource()
 void H264FramedLiveSource::doGetNextFrame()
 {
 	bool bRet=true;
+	int sleepTime=0;
 	if(m_ptCdevSdk==NULL)
 		return;
-	bRet=m_ptCdevSdk->GetVideoData(fTo,fFrameSize,fMaxSize,fNumTruncatedBytes,m_curVideoIndex);
-	if(fFrameSize==0)
+	bRet=m_ptCdevSdk->GetVideoData(fTo,fFrameSize,fMaxSize,fNumTruncatedBytes,m_lelfPackNums);
+	sleepTime=25000;
+	if(bRet==true && fFrameSize>0 && m_lelfPackNums>5)
 	{
-		Sleep(20);
-		bRet=m_ptCdevSdk->GetVideoData(fTo,fFrameSize,fMaxSize,fNumTruncatedBytes,m_curVideoIndex);
+		sleepTime=0;
 	}
-	nextTask() = envir().taskScheduler().scheduleDelayedTask(0,(TaskFunc*)FramedSource::afterGetting, this);//表示延迟0秒后再执行 afterGetting 函数
-	return;
+	if(bRet==true && fFrameSize>0)
+	{
+		 gettimeofday(&fPresentationTime, NULL);//同一帧的NAL具有相同的时间戳
+	}
+	fDurationInMicroseconds = sleepTime;//控制播放速度
+	//gettimeofday(&fPresentationTime, NULL);
+	//printf("fPresentationTime = %d.%d fDurationInMicroseconds=%d\n", fPresentationTime.tv_sec, fPresentationTime.tv_usec,fDurationInMicroseconds);      
+	//afterGetting(this);  
+	nextTask() = envir().taskScheduler().scheduleDelayedTask(sleepTime,(TaskFunc*)FramedSource::afterGetting, this);//表示延迟0秒后再执行 afterGetting 函数
 }
 

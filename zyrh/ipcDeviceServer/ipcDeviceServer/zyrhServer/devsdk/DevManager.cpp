@@ -40,7 +40,7 @@ int CDevManager::AddNewDev(CdevSdkParam mCdevSdkParam)
 	boost::asio::detail::mutex::scoped_lock lock(mutex_);
 	if (!GetDev(mCdevSdkParam.m_sDevId,mCdevSdkParam.m_CdevChannelDeviceParam.m_nChannelNo))
 	{
-		//if(mCdevSdkParam.m_CdevChannelDeviceParam.m_nPlatDevPort!=8025)
+		//if(mCdevSdkParam.m_CdevChannelDeviceParam.m_nPlatDevPort!=8012)
 		//	return -1;
 		boost::shared_ptr<CdevSdk> devPtr(new CdevSdk);
 		mCdevSdkParam.m_CdevChannelDeviceParam.m_nRtspServerStartPort=m_nRtspServerStartPort;

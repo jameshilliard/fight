@@ -26,7 +26,7 @@ H264LiveVideoServerMediaSubssion::~H264LiveVideoServerMediaSubssion()
 FramedSource* H264LiveVideoServerMediaSubssion::createNewStreamSource(unsigned clientSessionId, unsigned& estBitrate)
 {
 	/* Remain to do : assign estBitrate */
-	estBitrate = 1000; // kbps, estimate
+	estBitrate = 8000; // bps, estimate
 	
 	//创建视频源
 	H264FramedLiveSource* liveSource = H264FramedLiveSource::createNew(envir(),m_ptCdevSdk);

@@ -19,6 +19,13 @@
 #include "./CdevSdkParam.h"
 #include "../tcpServer/DeviceServer.h"
 
+typedef struct OneFramePacket_
+{
+	bool bKey;
+	uint32_t bufsize;
+	__int64 TimeStamp;
+	std::string buffer;
+}OneFramePacket;
 
 class  CdevSdk:public  boost::enable_shared_from_this<CdevSdk>
 {
@@ -42,7 +49,7 @@ public:
 	int CmdPtzControl(std::string sdevid,unsigned int nchannel,int ptz_type,int ptz_cmd,int action,int param,std::string& smsg );
 
 	//zss++
-	bool GetVideoData(unsigned char *ptData,unsigned int &frameSize,unsigned int dataMaxSize,unsigned int &fNumTruncatedBytes,unsigned int &curVideoIndex);
+	bool GetVideoData(unsigned char *ptData,unsigned int &frameSize,unsigned int dataMaxSize,unsigned int &fNumTruncatedBytes,unsigned int &lelfPackNums);
 	//bool addDeviceSource(std::vector<std::string > *vDeviceSource);
 	//bool removeDeviceSource(std::vector<std::string > *vDeviceSource);
 	void CdevSdk::runRtspServerActivity();
@@ -51,6 +58,7 @@ public:
 	void CdevSdk::StartRtspServerThread();
 	void RtspOnTime(const boost::system::error_code& e);
 	void StopPlay();
+	void GetKeyFrame();
 	//zss--
 private:
 	void ResetParam();
@@ -86,7 +94,7 @@ public:
 	boost::asio::detail::mutex mutex_Lock;
 	boost::asio::detail::mutex mutex_HandleVideo;
 	bool m_firstKey;
-	std::vector<std::string > m_deviceSource;
+	std::vector<OneFramePacket > m_deviceSource;
 private:
 	int m_nTimeNow;
 
@@ -130,5 +138,6 @@ public:
 	char	m_rtspEndFlag;
 	DeviceServer m_DeviceServer;
 	DWORD  m_rtspTime;
+	OneFramePacket m_keyFramePacket;
 	//zss--
 };

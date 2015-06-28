@@ -250,13 +250,13 @@ void DeviceServerConnection::run()
 	char buffer[BUFFER_SIZE];
 	Timespan mTimespan(30,0);
 	socket().setReceiveTimeout(mTimespan);
-	NET_INFO(("tcpServer:%d new connect this=0x%x\n",this));
+	//NET_INFO(("tcpServer:%d new connect this=0x%x\n",this));
 	while(1)
 	{
 		int iRet =socket().receiveBytes(&cmdLength, sizeof(cmdLength));
 		if(m_IpcDeviceParams->m_beatEnable==0 && m_IpcDeviceParams->m_isOnline==0)
 		{
-			Sleep(1000);
+			Sleep(5000);
 			socket().shutdown();
 			break;
 		}

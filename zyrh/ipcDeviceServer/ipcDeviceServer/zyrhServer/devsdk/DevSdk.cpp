@@ -393,7 +393,7 @@ CdevSdk::CdevSdk()
 	m_firstKey=true;
 	m_restartSDKFlag=false;
 	m_bStop = false;
-	m_rtspTime=0;
+	m_rtspTime=GetTickCount();
 	//m_nServerLine=0;
 	m_nLastPlatDevPort=0;
 	m_nCheckDelTimeOut = 0;
@@ -588,22 +588,14 @@ bool CdevSdk::StartDev()
 }
 bool CdevSdk::ReStartDev()
 {
-	if(m_rtspTime==0)
+	boost::asio::detail::mutex::scoped_lock lock(mutex_Lock);
+	if(((GetTickCount()-m_rtspTime)<3000) && (m_wmp_handle != -1))
 	{
-		m_rtspTime=GetTickCount();
-	}
-	else
-	{
-		if(((GetTickCount()-m_rtspTime)<3000) && (m_wmp_handle != -1))
-		{
-			return true;
-		}	
-	}
-	{
-		boost::asio::detail::mutex::scoped_lock lock(mutex_Lock);
-		m_deviceSource.clear();
-	}
-	m_firstKey=true;
+		printf("nowtime is %d - m_rtspTime %d = %d",GetTickCount(),m_rtspTime,(GetTickCount()-m_rtspTime));
+		return true;
+	}	
+	m_deviceSource.clear();
+	GetKeyFrame();
 	if(m_CdevSdkParam.m_isOnline==0 || m_CdevSdkParam.m_isChannelEnable==0)
 	{
 		if(m_CdevSdkParam.m_isOnline!=m_LastCdevSdkParam.m_isOnline || m_CdevSdkParam.m_isChannelEnable!=m_LastCdevSdkParam.m_isChannelEnable)
@@ -771,78 +763,89 @@ void CdevSdk::StopPlay()
 	g_logger.TraceInfo("sdk 控制端口:%d rtsp服务端口:%d 关闭设备 m_nAnalyzeHandle %d devid:%s",m_CdevSdkParam.m_CdevChannelDeviceParam.m_nPlatDevPort,m_CdevSdkParam.m_CdevChannelDeviceParam.m_nRtspServerStartPort,m_nAnalyzeHandle,m_sDevId.c_str());
 
 }
-bool CdevSdk::GetVideoData(unsigned char *ptData,unsigned int &fFrameSize,unsigned int dataMaxSize,unsigned int &fNumTruncatedBytes,unsigned int &curVideoIndex)
+bool CdevSdk::GetVideoData(unsigned char *ptData,unsigned int &fFrameSize,unsigned int dataMaxSize,unsigned int &fNumTruncatedBytes,unsigned int &lelfPackNums)
 {
 	int frameSize=0;
-	std::string videoBuffer;
+	bool hasKeyFrame=false;
+	fFrameSize=0;
+	fNumTruncatedBytes=0;
+	OneFramePacket videoBuffer;
 	{
 		boost::asio::detail::mutex::scoped_lock lock(mutex_HandleVideo);
+		std::vector<OneFramePacket >::iterator it;
+		if(m_firstKey==true && (!m_deviceSource.empty()))
+		{
+			int count=0;
+			for(it=m_deviceSource.begin(); it!= m_deviceSource.end(); it++)
+			{
+				count++;
+				//printf("packet %d size %d---\n",count,it->bufsize);
+				if(it->bKey==true)
+				{
+					//printf("keytimeStamp is %d %d---\n",m_keyFramePacket.buffer.size(),m_keyFramePacket.TimeStamp);
+					hasKeyFrame=true;
+					m_firstKey=false;
+					break;
+				}
+			}
+			if(hasKeyFrame==true)
+			{		
+				//printf("delete 1 %d packet---\n",count-1);
+				if(count!=1)
+					m_deviceSource.erase(m_deviceSource.begin(),m_deviceSource.begin()+count-1);
+			}
+			else
+			{
+				//printf("delete 2 %d packet-m_keyFramePacket.buffer.size=%d--\n",m_deviceSource.size(),m_keyFramePacket.buffer.size());
+				if(m_keyFramePacket.buffer.size()>0)
+				{
+					it=m_deviceSource.begin();
+					int validKeyTime=it->TimeStamp-m_keyFramePacket.TimeStamp;
+					if(validKeyTime<5000 && validKeyTime>-5000)
+					{
+						m_firstKey=false;
+						m_deviceSource.insert(m_deviceSource.begin(),m_keyFramePacket);
+					}
+					else
+						m_deviceSource.clear();
+				}
+				else
+				{
+					m_deviceSource.clear();
+					m_rtspTime=GetTickCount();
+				}
+			}
+		}
 		if(!m_deviceSource.empty())
 		{
 			m_rtspTime=GetTickCount();
-			std::vector<std::string >::iterator it=m_deviceSource.begin();
+			it=m_deviceSource.begin();
 			videoBuffer=*it;
-			m_deviceSource.erase(it);
-		}
-		else
-		{
-			//if(((GetTickCount()-m_rtspTime)>3000) && (m_restartSDKFlag==false))
-			//{
-			//	printf("m_rtspTime=%ld---",m_rtspTime);
-			//	printf("tcp %d:rtsp:%d,this 0x%x--\n",m_CdevSdkParam.m_CdevChannelDeviceParam.m_nPlatDevPort,m_CdevSdkParam.m_CdevChannelDeviceParam.m_nRtspServerStartPort,this);
-			//	m_rtspTime=GetTickCount();
-			//	m_restartSDKFlag=true;
-			//}	
+			frameSize=videoBuffer.buffer.size();
+			if(frameSize<=dataMaxSize)
+			{
+				m_deviceSource.erase(it);
+			}
+			lelfPackNums=m_deviceSource.size();
 		}
 	}
-	frameSize=videoBuffer.size();
-	if(frameSize>0)
+	if(frameSize>dataMaxSize)
 	{
-		//printf("tcp %d:rtsp:%d,this time:%d %d,this 0x%x,fFrameSize 1 is %d--%d-%d-\n",m_CdevSdkParam.m_CdevChannelDeviceParam.m_nPlatDevPort,m_CdevSdkParam.m_CdevChannelDeviceParam.m_nRtspServerStartPort,GetTickCount(),m_deviceSource.size(),this,frameSize,curVideoIndex,dataMaxSize);
-		if(frameSize>dataMaxSize)
-		{
-			memcpy(ptData,videoBuffer.c_str(),dataMaxSize);
-			fFrameSize=dataMaxSize;
-			fNumTruncatedBytes=frameSize-dataMaxSize;
-			curVideoIndex=0;
-		}	
-		else
-		{	
-			memcpy(ptData,videoBuffer.c_str(),frameSize);
-			fFrameSize=frameSize;
-			fNumTruncatedBytes=0;
-			//for(int i=0;i<50;i++)
-			//{
-			//	if(!m_deviceSource.empty())
-			//	{
-			//		it=m_deviceSource.begin();
-			//		frameSize=it->length();
-			//		if(frameSize>(dataMaxSize-fFrameSize))
-			//		{
-			//			break;
-			//		}
-			//		else
-			//		{
-			//			memcpy(ptData+fFrameSize,it->c_str(),frameSize);
-			//			fFrameSize=fFrameSize+frameSize;
-			//			fNumTruncatedBytes=0;
-			//			m_deviceSource.erase(it);		
-			//		}	
-			//	}
-			//	else
-			//	{
-			//		break;
-			//	}
-			//}
-		}
-		return true;
-	}
-	else
-	{
-		fFrameSize=0;
-		fNumTruncatedBytes=0;
+		memset(ptData,0,dataMaxSize);
+		fFrameSize=dataMaxSize;
+		fNumTruncatedBytes=frameSize-dataMaxSize;
 		return false;
 	}	
+	else if(frameSize>0)
+	{	
+		printf("tcp=%d,rtsp=%d,time=%d,leftPackNum=%d,thisPtr=0x%x,fFrameSize=%d,fMaxSize=%d,timeStamp=%ld\n",m_CdevSdkParam.m_CdevChannelDeviceParam.m_nPlatDevPort,m_CdevSdkParam.m_CdevChannelDeviceParam.m_nRtspServerStartPort,GetTickCount(),lelfPackNums,this,frameSize,dataMaxSize,videoBuffer.TimeStamp);
+		
+		memcpy(ptData,videoBuffer.buffer.c_str(),frameSize);
+		fFrameSize=frameSize;
+		fNumTruncatedBytes=0;
+		return true;
+	}
+	return false;
 }
 
 std::string CdevSdk::CreateM3u8File()
@@ -897,6 +900,21 @@ bool CdevSdk::InPutPsData(unsigned char* videoPsBuf,unsigned int  psBufsize,int 
 		m_nTimeNow = time(NULL);
 		if (m_nSystem_Format == MYSYSTEM_MPEG2_PS)
 		{
+			if(0)
+			{
+				FILE * m_pFileStream;
+				//char temp[16]={0};
+				//memset(temp,0x55,sizeof(temp));
+				char filePath[128]={0};
+				sprintf(filePath,"h264//%d_%d_org.h264",m_CdevSdkParam.m_CdevChannelDeviceParam.m_nPlatDevPort,m_CdevSdkParam.m_CdevChannelDeviceParam.m_nRtspServerStartPort);
+				//以追加的方式打开文件流
+				m_pFileStream = fopen(filePath, "ab+");
+				//fwrite((uint8_t *)temp,sizeof(temp),1,m_pFileStream);
+				//fwrite((uint8_t *)(&nType),sizeof(nType),1,m_pFileStream);
+				fwrite((unsigned char *)videoPsBuf,psBufsize,1,m_pFileStream);
+				fflush(m_pFileStream);
+				fclose(m_pFileStream);		
+			}	
 			AnalyzeDataInputData(m_nAnalyzeHandle, videoPsBuf, psBufsize);
 			while(1)
 			{
@@ -995,21 +1013,28 @@ void CdevSdk::handleAudioAac(uint8_t* aacbuf,uint32_t bufsize,__int64 timeStamp,
 void CdevSdk::handleVideo(uint8_t* vidoebuf,uint32_t bufsize,__int64 TimeStamp,bool bkey)
 {
 	unsigned int size=0;
-	std::string temp((char *)vidoebuf,bufsize);
+	//std::string temp((char *)vidoebuf,bufsize);
+	OneFramePacket tempOneFramePacket;
+	tempOneFramePacket.bKey=bkey;
+	tempOneFramePacket.TimeStamp=TimeStamp;
+	tempOneFramePacket.bufsize=bufsize;
+	tempOneFramePacket.buffer.assign((const char *)vidoebuf,bufsize);
 	{
-		//printf("m_firstKey=%d ---bkey=%d---------\n",m_firstKey,bkey);
-		boost::asio::detail::mutex::scoped_lock lock(mutex_HandleVideo);
-		if((m_firstKey==true && bkey==true) || m_firstKey==false)
+		if(bkey==true)
 		{
-			m_firstKey=false;
+			printf("Get keyFrame size is %d\n",bufsize);
+			m_keyFramePacket=tempOneFramePacket;
+		}
+		boost::asio::detail::mutex::scoped_lock lock(mutex_HandleVideo);
+		{
 			size=m_deviceSource.size();
 			if(size<200)
 			{
-				m_deviceSource.push_back(temp);
+				m_deviceSource.push_back(tempOneFramePacket);
 			}
 			else
 			{
-				g_logger.TraceInfo("tcp %d,rtsp %d,insert data size is %d stask %d\n",m_CdevSdkParam.m_CdevChannelDeviceParam.m_nPlatDevPort,m_CdevSdkParam.m_CdevChannelDeviceParam.m_nRtspServerStartPort,temp.length(),m_deviceSource.size());	
+				g_logger.TraceInfo("tcp %d,rtsp %d,insert data size is %d stask %d\n",m_CdevSdkParam.m_CdevChannelDeviceParam.m_nPlatDevPort,m_CdevSdkParam.m_CdevChannelDeviceParam.m_nRtspServerStartPort,bufsize,size);	
 				m_deviceSource.clear();
 			}
 		}
@@ -1033,9 +1058,11 @@ bool CdevSdk::Ps_AnalyzeDataGetPacketEx()
 	unsigned int TimeStamp;
 	int nh264Size = 0;
 	PACKET_INFO_EX stPacket;
+	char temp[16]={0};
 	while (AnalyzeDataGetPacketEx(m_nAnalyzeHandle, &stPacket) == 0)
 	{
 		bool bkey = false;
+		printf("stPacket.nPacketType=%d---\n",stPacket.nPacketType);
 		if (stPacket.nPacketType == VIDEO_I_FRAME)
 		{
 			bkey = true;
@@ -1048,6 +1075,18 @@ bool CdevSdk::Ps_AnalyzeDataGetPacketEx()
 			char* pEnd = stPacket.pPacketBuffer + stPacket.dwPacketSize;
 			TimeStamp = stPacket.dwTimeStamp;
 			nh264Size = 0;
+			if(0)
+			{
+				FILE * m_pFileStream;
+				char filePath[128]={0};
+				sprintf(filePath,"h264//%d_%d_ps.h264",m_CdevSdkParam.m_CdevChannelDeviceParam.m_nPlatDevPort,m_CdevSdkParam.m_CdevChannelDeviceParam.m_nRtspServerStartPort);
+				//以追加的方式打开文件流
+				m_pFileStream = fopen(filePath, "ab+");
+				//fwrite((uint8_t *)temp,sizeof(temp),1,m_pFileStream);
+				fwrite((uint8_t *)pStart,stPacket.dwPacketSize,1,m_pFileStream);
+				fflush(m_pFileStream);
+				fclose(m_pFileStream);	
+			}
 			while (pStart < pEnd)
 			{
 				unsigned char nType = (unsigned char)*(pStart + 3) ;	
@@ -1076,6 +1115,18 @@ bool CdevSdk::Ps_AnalyzeDataGetPacketEx()
 				buffPtr->bkey = bkey;
 				buffPtr->TimeStamp = TimeStamp;
 				m_SendBuflist.pushBack(buffPtr);
+				if(0)
+				{
+					FILE * m_pFileStream;
+					char filePath[128]={0};
+					sprintf(filePath,"h264//%d_%d.h264",m_CdevSdkParam.m_CdevChannelDeviceParam.m_nPlatDevPort,m_CdevSdkParam.m_CdevChannelDeviceParam.m_nRtspServerStartPort);
+					//以追加的方式打开文件流
+					m_pFileStream = fopen(filePath, "ab+");
+					//fwrite((uint8_t *)temp,sizeof(temp),1,m_pFileStream);
+					fwrite((uint8_t *)m_h264Buf,nh264Size,1,m_pFileStream);
+					fflush(m_pFileStream);
+					fclose(m_pFileStream);	
+				}
 				//handleVideo((uint8_t *)m_h264Buf,nh264Size, TimeStamp,bkey);
 				return true;
 			}
@@ -1219,9 +1270,7 @@ int CdevSdk::startRtspServer()
 	ServerMediaSession* sms = ServerMediaSession::createNew(*env, streamName, NULL,descriptionString,False);
 	char const* streamNameClientDemo = "mpeg4/ch01/main/av_stream";
 	ServerMediaSession* smsClientDemo = ServerMediaSession::createNew(*env, streamNameClientDemo, NULL,descriptionString,False);
-	OutPacketBuffer::maxSize = 500000; // allow for some possibly large H.264 frames
 	sms->addSubsession(H264LiveVideoServerMediaSubssion::createNew(*env, reuseFirstSource,this));//修改为自己实现的H264LiveVideoServerMediaSubssion
-	OutPacketBuffer::maxSize = 500000; // allow for some possibly large H.264 frames
 	smsClientDemo->addSubsession(H264LiveVideoServerMediaSubssion::createNew(*env, reuseFirstSource,this));//修改为自己实现的H264LiveVideoServerMediaSubssion
 	rtspServer->addServerMediaSession(sms);
 	rtspServer->addServerMediaSession(smsClientDemo);
@@ -1246,9 +1295,16 @@ int CdevSdk::startRtspServer()
 	scheduler = NULL;
 	return 0;
 }
-
+extern int TestStartRtspServer(int channel);
 void CdevSdk::runRtspServerActivity()
 {
+#if 0
+	m_watchVariable=0;
+	m_rtspEndFlag=1;
+	TestStartRtspServer(0);
+	m_watchVariable=1;
+	m_rtspEndFlag=0;
+#else
 	m_watchVariable=0;
 	m_rtspEndFlag=1;
 	startRtspServer();
@@ -1256,4 +1312,11 @@ void CdevSdk::runRtspServerActivity()
 	m_watchVariable=1;
 	m_rtspEndFlag=0;
 	Sleep(1000);
+#endif
+}
+void CdevSdk::GetKeyFrame()
+{
+	boost::asio::detail::mutex::scoped_lock lock(mutex_HandleVideo);
+	m_rtspTime=GetTickCount();
+	m_firstKey=true;
 }
