@@ -5,7 +5,18 @@
 #include <GlobalClass.h>
 #include <GlobalParam.h>
 #include "DevManager.h"
+
+
+#define		VERSION_4_0_0		1
+#define		VERSION_3_0_0		0
+#define		ANALYZEDATETYPE		VERSION_3_0_0
+
+#if	ANALYZEDATETYPE==VERSION_3_0_0
 #include "AnalyzeDataInterface.h"
+#elif	ANALYZEDATETYPE==VERSION_4_0_0
+#include "AnalyzeDataDefine.h"
+#include "AnalyzeDataNewInterface.h"
+#endif
 
 #include "liveMedia.hh"
 #include "BasicUsageEnvironment.hh"
@@ -381,6 +392,7 @@ CdevSdk::CdevSdk()
 	m_pAacEncoder = NULL;
 	m_pG722 = NULL;
 	m_nAnalyzeHandle = -1;
+	m_nAnalyzeHandlePtr=NULL;
 	m_nTimeNow = time(NULL);
 	boost::asio::io_service& _IoService = CGlobalClass::GetInstance()->GetIoservice()->get_io_service();
 	m_io_timer_Ptr.reset(new boost::asio::deadline_timer(_IoService) );
@@ -714,12 +726,24 @@ void CdevSdk::StopDev()
 		m_nSkdPlayPort = -1;
 
 	}
+
+	#if ANALYZEDATETYPE==VERSION_3_0_0
 	if (m_nAnalyzeHandle != -1)
 	{
 		AnalyzeDataClose(m_nAnalyzeHandle);
 		g_logger.TraceInfo("停止解包 m_nAnalyzeHandle %d devid:%s",m_nAnalyzeHandle,m_sDevId.c_str());
 		m_nAnalyzeHandle = -1;
 	}
+	#else ANALYZEDATETYPE==VERSION_4_0_0
+	if(m_nAnalyzeHandlePtr != NULL)
+	{
+		HIKANA_Destroy(m_nAnalyzeHandlePtr);
+		g_logger.TraceInfo("停止解包 m_nAnalyzeHandle %d devid:%s",m_nAnalyzeHandlePtr,m_sDevId.c_str());
+		m_nAnalyzeHandlePtr = NULL;	
+                   
+	}
+	#endif
+	
 	if (m_pG722)
 	{
 		NET_DVR_ReleaseG722Decoder(m_pG722);
@@ -754,6 +778,8 @@ void CdevSdk::StopPlay()
 		m_nSkdPlayPort = -1;
 
 	}
+
+	#if ANALYZEDATETYPE==VERSION_3_0_0
 	if (m_nAnalyzeHandle != -1)
 	{
 		AnalyzeDataClose(m_nAnalyzeHandle);
@@ -761,7 +787,16 @@ void CdevSdk::StopPlay()
 		m_nAnalyzeHandle = -1;
 	}
 	g_logger.TraceInfo("sdk 控制端口:%d rtsp服务端口:%d 关闭设备 m_nAnalyzeHandle %d devid:%s",m_CdevSdkParam.m_CdevChannelDeviceParam.m_nPlatDevPort,m_CdevSdkParam.m_CdevChannelDeviceParam.m_nRtspServerStartPort,m_nAnalyzeHandle,m_sDevId.c_str());
-
+	#else ANALYZEDATETYPE==VERSION_4_0_0
+	if (m_nAnalyzeHandlePtr != NULL)
+	{
+		HIKANA_Destroy(m_nAnalyzeHandlePtr);
+		//g_logger.TraceInfo("sdk 控制端口:%d rtsp服务端口:%d 停止解包 m_nAnalyzeHandle %d devid:%s",m_CdevSdkParam.m_CdevChannelDeviceParam.m_nPlatDevPort,m_CdevSdkParam.m_CdevChannelDeviceParam.m_nRtspServerStartPort,m_nAnalyzeHandle,m_sDevId.c_str());
+		m_nAnalyzeHandlePtr = NULL;
+	}
+	g_logger.TraceInfo("sdk 控制端口:%d rtsp服务端口:%d 关闭设备 m_nAnalyzeHandle %d devid:%s",m_CdevSdkParam.m_CdevChannelDeviceParam.m_nPlatDevPort,m_CdevSdkParam.m_CdevChannelDeviceParam.m_nRtspServerStartPort,m_nAnalyzeHandlePtr,m_sDevId.c_str());
+	#endif
+	
 }
 bool CdevSdk::GetVideoData(unsigned char *ptData,unsigned int &fFrameSize,unsigned int dataMaxSize,unsigned int &fNumTruncatedBytes,unsigned int &lelfPackNums)
 {
@@ -867,9 +902,12 @@ bool CdevSdk::InPutPsData(unsigned char* videoPsBuf,unsigned int  psBufsize,int 
 		}
 		if (m_nSystem_Format == MYSYSTEM_MPEG2_PS)
 		{
+			#if ANALYZEDATETYPE==VERSION_3_0_0
 			m_nAnalyzeHandle = AnalyzeDataGetSafeHandle();
-			AnalyzeDataOpenStreamEx(m_nAnalyzeHandle, (PBYTE)videoPsBuf);
-
+			AnalyzeDataOpenStreamEx(m_nAnalyzeHandle, (PBYTE)videoPsBuf);	
+			#else ANALYZEDATETYPE==VERSION_4_0_0
+			m_nAnalyzeHandlePtr = HIKANA_CreateStreamEx(500*1024,(PBYTE)videoPsBuf);
+			#endif
 		}
 		else if(m_nSkdPlayPort == -1)
 		{
@@ -900,7 +938,7 @@ bool CdevSdk::InPutPsData(unsigned char* videoPsBuf,unsigned int  psBufsize,int 
 		m_nTimeNow = time(NULL);
 		if (m_nSystem_Format == MYSYSTEM_MPEG2_PS)
 		{
-			if(0)
+			if(1)
 			{
 				FILE * m_pFileStream;
 				//char temp[16]={0};
@@ -915,7 +953,12 @@ bool CdevSdk::InPutPsData(unsigned char* videoPsBuf,unsigned int  psBufsize,int 
 				fflush(m_pFileStream);
 				fclose(m_pFileStream);		
 			}	
-			AnalyzeDataInputData(m_nAnalyzeHandle, videoPsBuf, psBufsize);
+			#if ANALYZEDATETYPE==VERSION_3_0_0
+			AnalyzeDataInputData(m_nAnalyzeHandle, videoPsBuf, psBufsize);	
+			#else ANALYZEDATETYPE==VERSION_4_0_0
+			HIKANA_InputData(m_nAnalyzeHandlePtr, videoPsBuf, psBufsize);
+			#endif
+			
 			while(1)
 			{
 				if(Ps_AnalyzeDataGetPacketEx())
@@ -1039,7 +1082,7 @@ void CdevSdk::handleVideo(uint8_t* vidoebuf,uint32_t bufsize,__int64 TimeStamp,b
 			}
 		}
 	}
-	if(((GetTickCount()-m_rtspTime)>3000) && (m_wmp_handle != -1))
+	if(((GetTickCount()-m_rtspTime)>10000) && (m_wmp_handle != -1))
 	{
 		StopPlay();
 	}	
@@ -1051,18 +1094,28 @@ void CdevSdk::handleVideo(uint8_t* vidoebuf,uint32_t bufsize,__int64 TimeStamp,b
 }
 bool CdevSdk::Ps_AnalyzeDataGetPacketEx()
 {
+	#if ANALYZEDATETYPE==VERSION_3_0_0
 	if (m_nAnalyzeHandle == -1)
 	{
 		return false;
-	}
+	}	
+	#else ANALYZEDATETYPE==VERSION_4_0_0
+	if (m_nAnalyzeHandlePtr == NULL)
+	{
+		return false;
+	}	
+	#endif
 	unsigned int TimeStamp;
 	int nh264Size = 0;
 	PACKET_INFO_EX stPacket;
 	char temp[16]={0};
+	#if ANALYZEDATETYPE==VERSION_3_0_0
 	while (AnalyzeDataGetPacketEx(m_nAnalyzeHandle, &stPacket) == 0)
+	#else ANALYZEDATETYPE==VERSION_4_0_0
+	while (HIKANA_GetOnePacketEx(m_nAnalyzeHandlePtr, &stPacket) == 0)
+	#endif
 	{
 		bool bkey = false;
-		printf("stPacket.nPacketType=%d---\n",stPacket.nPacketType);
 		if (stPacket.nPacketType == VIDEO_I_FRAME)
 		{
 			bkey = true;
@@ -1071,11 +1124,11 @@ bool CdevSdk::Ps_AnalyzeDataGetPacketEx()
 		{
 			Ps_packae_header Ps_packae_header_;
 			pes_packae_header pes_packae_header_;
-			char* pStart = stPacket.pPacketBuffer;
-			char* pEnd = stPacket.pPacketBuffer + stPacket.dwPacketSize;
+			char* pStart = (char *)stPacket.pPacketBuffer;
+			char* pEnd = (char *)stPacket.pPacketBuffer + stPacket.dwPacketSize;
 			TimeStamp = stPacket.dwTimeStamp;
 			nh264Size = 0;
-			if(0)
+			if(1)
 			{
 				FILE * m_pFileStream;
 				char filePath[128]={0};
@@ -1115,7 +1168,7 @@ bool CdevSdk::Ps_AnalyzeDataGetPacketEx()
 				buffPtr->bkey = bkey;
 				buffPtr->TimeStamp = TimeStamp;
 				m_SendBuflist.pushBack(buffPtr);
-				if(0)
+				if(1)
 				{
 					FILE * m_pFileStream;
 					char filePath[128]={0};
@@ -1135,8 +1188,8 @@ bool CdevSdk::Ps_AnalyzeDataGetPacketEx()
 		else if (stPacket.nPacketType == AUDIO_PACKET)
 		{
 			pes_packae_header pes_packae_header_;
-			char* pStart = stPacket.pPacketBuffer;
-			char* pEnd = stPacket.pPacketBuffer + stPacket.dwPacketSize;
+			char* pStart = (char *)stPacket.pPacketBuffer;
+			char* pEnd = (char *)stPacket.pPacketBuffer + stPacket.dwPacketSize;
 			unsigned char nType = (unsigned char)*(pStart + 3) ;
 			while (pStart < pEnd)
 			{

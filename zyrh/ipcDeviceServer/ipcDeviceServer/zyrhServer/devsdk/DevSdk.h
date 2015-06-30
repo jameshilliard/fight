@@ -90,6 +90,7 @@ public:
 
 	void*  m_pG722;
 	int m_nAnalyzeHandle;
+	void *m_nAnalyzeHandlePtr;
 	int m_nSystem_Format;
 	boost::asio::detail::mutex mutex_Lock;
 	boost::asio::detail::mutex mutex_HandleVideo;
