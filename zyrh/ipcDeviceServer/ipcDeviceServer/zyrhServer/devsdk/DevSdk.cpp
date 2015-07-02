@@ -10,6 +10,7 @@
 #define		VERSION_4_0_0		1
 #define		VERSION_3_0_0		0
 #define		ANALYZEDATETYPE		VERSION_3_0_0
+//#define		DEBUG_FILE			1
 
 #if	ANALYZEDATETYPE==VERSION_3_0_0
 #include "AnalyzeDataInterface.h"
@@ -412,6 +413,7 @@ CdevSdk::CdevSdk()
 
 	m_stream_handle=-1;
 	m_wmp_handle=-1;
+	//m_firstFramePrefix=-1;
 	m_rtspEndFlag=0;
 }
 
@@ -601,7 +603,7 @@ bool CdevSdk::StartDev()
 bool CdevSdk::ReStartDev()
 {
 	boost::asio::detail::mutex::scoped_lock lock(mutex_Lock);
-	if(((GetTickCount()-m_rtspTime)<3000) && (m_wmp_handle != -1))
+	if(((GetTickCount()-m_rtspTime)<6000) && (m_wmp_handle != -1))
 	{
 		printf("nowtime is %d - m_rtspTime %d = %d",GetTickCount(),m_rtspTime,(GetTickCount()-m_rtspTime));
 		return true;
@@ -646,7 +648,7 @@ bool CdevSdk::ReStartDev()
 		m_sDevId.c_str(),//devid:设备ID
 		m_nnchannel,//channel:设备通道号
 		stream_type, //stream_type:WMP_STREAM_MAIN 1-主码流   WMP_STREAM_SUB 2-子码流 
-		WMP_TRANS_UDP,//trans_mode:WMP_TRANS_TCP/WMP_TRANS_UDP  #define WMP_TRANS_TCP	1#define WMP_TRANS_UDP	2
+		m_CdevSdkParam.m_CdevChannelDeviceParam.m_nConnectType,//trans_mode:WMP_TRANS_TCP/WMP_TRANS_UDP  #define WMP_TRANS_TCP	1#define WMP_TRANS_UDP	2
 		m_nDevLine,//dev_line:设备线路号
 		CBF_OnStreamPlay, this,(int *)&m_stream_handle);
 	g_logger.TraceInfo("sdk 控制端口:%d rtsp服务端口:%d 重新取流 设备ID:%s 设备通道号:%d,设备线路号:%d,m_wmp_handle:%d,主次码流:%d,取流返回:%d ",m_CdevSdkParam.m_CdevChannelDeviceParam.m_nPlatDevPort,m_CdevSdkParam.m_CdevChannelDeviceParam.m_nRtspServerStartPort,m_sDevId.c_str(),m_nnchannel,m_nDevLine,m_wmp_handle,stream_type,ret);
@@ -783,18 +785,16 @@ void CdevSdk::StopPlay()
 	if (m_nAnalyzeHandle != -1)
 	{
 		AnalyzeDataClose(m_nAnalyzeHandle);
-		//g_logger.TraceInfo("sdk 控制端口:%d rtsp服务端口:%d 停止解包 m_nAnalyzeHandle %d devid:%s",m_CdevSdkParam.m_CdevChannelDeviceParam.m_nPlatDevPort,m_CdevSdkParam.m_CdevChannelDeviceParam.m_nRtspServerStartPort,m_nAnalyzeHandle,m_sDevId.c_str());
+		g_logger.TraceInfo("sdk 控制端口:%d rtsp服务端口:%d 关闭设备 m_nAnalyzeHandle %d devid:%s",m_CdevSdkParam.m_CdevChannelDeviceParam.m_nPlatDevPort,m_CdevSdkParam.m_CdevChannelDeviceParam.m_nRtspServerStartPort,m_nAnalyzeHandlePtr,m_sDevId.c_str());
 		m_nAnalyzeHandle = -1;
 	}
-	g_logger.TraceInfo("sdk 控制端口:%d rtsp服务端口:%d 关闭设备 m_nAnalyzeHandle %d devid:%s",m_CdevSdkParam.m_CdevChannelDeviceParam.m_nPlatDevPort,m_CdevSdkParam.m_CdevChannelDeviceParam.m_nRtspServerStartPort,m_nAnalyzeHandle,m_sDevId.c_str());
 	#else ANALYZEDATETYPE==VERSION_4_0_0
 	if (m_nAnalyzeHandlePtr != NULL)
 	{
 		HIKANA_Destroy(m_nAnalyzeHandlePtr);
-		//g_logger.TraceInfo("sdk 控制端口:%d rtsp服务端口:%d 停止解包 m_nAnalyzeHandle %d devid:%s",m_CdevSdkParam.m_CdevChannelDeviceParam.m_nPlatDevPort,m_CdevSdkParam.m_CdevChannelDeviceParam.m_nRtspServerStartPort,m_nAnalyzeHandle,m_sDevId.c_str());
+		g_logger.TraceInfo("sdk 控制端口:%d rtsp服务端口:%d 关闭设备 m_nAnalyzeHandle %d devid:%s",m_CdevSdkParam.m_CdevChannelDeviceParam.m_nPlatDevPort,m_CdevSdkParam.m_CdevChannelDeviceParam.m_nRtspServerStartPort,m_nAnalyzeHandlePtr,m_sDevId.c_str());
 		m_nAnalyzeHandlePtr = NULL;
 	}
-	g_logger.TraceInfo("sdk 控制端口:%d rtsp服务端口:%d 关闭设备 m_nAnalyzeHandle %d devid:%s",m_CdevSdkParam.m_CdevChannelDeviceParam.m_nPlatDevPort,m_CdevSdkParam.m_CdevChannelDeviceParam.m_nRtspServerStartPort,m_nAnalyzeHandlePtr,m_sDevId.c_str());
 	#endif
 	
 }
@@ -902,12 +902,28 @@ bool CdevSdk::InPutPsData(unsigned char* videoPsBuf,unsigned int  psBufsize,int 
 		}
 		if (m_nSystem_Format == MYSYSTEM_MPEG2_PS)
 		{
+			//m_firstFramePrefix=0;
 			#if ANALYZEDATETYPE==VERSION_3_0_0
 			m_nAnalyzeHandle = AnalyzeDataGetSafeHandle();
 			AnalyzeDataOpenStreamEx(m_nAnalyzeHandle, (PBYTE)videoPsBuf);	
 			#else ANALYZEDATETYPE==VERSION_4_0_0
 			m_nAnalyzeHandlePtr = HIKANA_CreateStreamEx(500*1024,(PBYTE)videoPsBuf);
 			#endif
+			g_logger.TraceInfo("sdk 控制端口:%d rtsp服务端口:%d 取流成功 m_nAnalyzeHandle %d devid:%s",m_CdevSdkParam.m_CdevChannelDeviceParam.m_nPlatDevPort,m_CdevSdkParam.m_CdevChannelDeviceParam.m_nRtspServerStartPort,m_nAnalyzeHandlePtr,m_sDevId.c_str());
+			#ifdef		DEBUG_FILE
+			FILE * m_pFileStream;
+			//char temp[16]={0};
+			//memset(temp,0x55,sizeof(temp));
+			char filePath[128]={0};
+			sprintf(filePath,"h264//%d_%d_org.h264",m_CdevSdkParam.m_CdevChannelDeviceParam.m_nPlatDevPort,m_CdevSdkParam.m_CdevChannelDeviceParam.m_nRtspServerStartPort);
+			//以追加的方式打开文件流
+			m_pFileStream = fopen(filePath, "ab+");
+			//fwrite((uint8_t *)temp,sizeof(temp),1,m_pFileStream);
+			//fwrite((uint8_t *)(&nType),sizeof(nType),1,m_pFileStream);
+			fwrite((unsigned char *)videoPsBuf,psBufsize,1,m_pFileStream);
+			fflush(m_pFileStream);
+			fclose(m_pFileStream);		
+			#endif	
 		}
 		else if(m_nSkdPlayPort == -1)
 		{
@@ -938,21 +954,31 @@ bool CdevSdk::InPutPsData(unsigned char* videoPsBuf,unsigned int  psBufsize,int 
 		m_nTimeNow = time(NULL);
 		if (m_nSystem_Format == MYSYSTEM_MPEG2_PS)
 		{
-			if(1)
-			{
-				FILE * m_pFileStream;
-				//char temp[16]={0};
-				//memset(temp,0x55,sizeof(temp));
-				char filePath[128]={0};
-				sprintf(filePath,"h264//%d_%d_org.h264",m_CdevSdkParam.m_CdevChannelDeviceParam.m_nPlatDevPort,m_CdevSdkParam.m_CdevChannelDeviceParam.m_nRtspServerStartPort);
-				//以追加的方式打开文件流
-				m_pFileStream = fopen(filePath, "ab+");
-				//fwrite((uint8_t *)temp,sizeof(temp),1,m_pFileStream);
-				//fwrite((uint8_t *)(&nType),sizeof(nType),1,m_pFileStream);
-				fwrite((unsigned char *)videoPsBuf,psBufsize,1,m_pFileStream);
-				fflush(m_pFileStream);
-				fclose(m_pFileStream);		
-			}	
+			
+			#ifdef		DEBUG_FILE
+			FILE * m_pFileStream;
+			//char temp[16]={0};
+			//memset(temp,0x55,sizeof(temp));
+			char filePath[128]={0};
+			sprintf(filePath,"h264//%d_%d_org.h264",m_CdevSdkParam.m_CdevChannelDeviceParam.m_nPlatDevPort,m_CdevSdkParam.m_CdevChannelDeviceParam.m_nRtspServerStartPort);
+			//以追加的方式打开文件流
+			m_pFileStream = fopen(filePath, "ab+");
+			//fwrite((uint8_t *)temp,sizeof(temp),1,m_pFileStream);
+			//fwrite((uint8_t *)(&nType),sizeof(nType),1,m_pFileStream);
+			fwrite((unsigned char *)videoPsBuf,psBufsize,1,m_pFileStream);
+			fflush(m_pFileStream);
+			fclose(m_pFileStream);		
+			#endif
+			//if(psBufsize>4 && m_firstFramePrefix==0)
+			//{
+			//	if(videoPsBuf[0]==0x0 && videoPsBuf[1]==0x0 && videoPsBuf[2]==0x1 && videoPsBuf[3]==0xBA)
+			//	{
+			//		memcpy(&m_firstFramePrefix,videoPsBuf,sizeof(m_firstFramePrefix));
+			//	}
+			//	else
+			//		return true;
+			//}
+
 			#if ANALYZEDATETYPE==VERSION_3_0_0
 			AnalyzeDataInputData(m_nAnalyzeHandle, videoPsBuf, psBufsize);	
 			#else ANALYZEDATETYPE==VERSION_4_0_0
@@ -1082,7 +1108,7 @@ void CdevSdk::handleVideo(uint8_t* vidoebuf,uint32_t bufsize,__int64 TimeStamp,b
 			}
 		}
 	}
-	if(((GetTickCount()-m_rtspTime)>10000) && (m_wmp_handle != -1))
+	if(((GetTickCount()-m_rtspTime)>6000) && (m_wmp_handle != -1))
 	{
 		StopPlay();
 	}	
@@ -1128,18 +1154,17 @@ bool CdevSdk::Ps_AnalyzeDataGetPacketEx()
 			char* pEnd = (char *)stPacket.pPacketBuffer + stPacket.dwPacketSize;
 			TimeStamp = stPacket.dwTimeStamp;
 			nh264Size = 0;
-			if(1)
-			{
-				FILE * m_pFileStream;
-				char filePath[128]={0};
-				sprintf(filePath,"h264//%d_%d_ps.h264",m_CdevSdkParam.m_CdevChannelDeviceParam.m_nPlatDevPort,m_CdevSdkParam.m_CdevChannelDeviceParam.m_nRtspServerStartPort);
-				//以追加的方式打开文件流
-				m_pFileStream = fopen(filePath, "ab+");
-				//fwrite((uint8_t *)temp,sizeof(temp),1,m_pFileStream);
-				fwrite((uint8_t *)pStart,stPacket.dwPacketSize,1,m_pFileStream);
-				fflush(m_pFileStream);
-				fclose(m_pFileStream);	
-			}
+			#ifdef		DEBUG_FILE
+			FILE * m_pFileStream;
+			char filePath[128]={0};
+			sprintf(filePath,"h264//%d_%d_ps.h264",m_CdevSdkParam.m_CdevChannelDeviceParam.m_nPlatDevPort,m_CdevSdkParam.m_CdevChannelDeviceParam.m_nRtspServerStartPort);
+			//以追加的方式打开文件流
+			m_pFileStream = fopen(filePath, "ab+");
+			//fwrite((uint8_t *)temp,sizeof(temp),1,m_pFileStream);
+			fwrite((uint8_t *)pStart,stPacket.dwPacketSize,1,m_pFileStream);
+			fflush(m_pFileStream);
+			fclose(m_pFileStream);	
+			#endif
 			while (pStart < pEnd)
 			{
 				unsigned char nType = (unsigned char)*(pStart + 3) ;	
@@ -1168,18 +1193,17 @@ bool CdevSdk::Ps_AnalyzeDataGetPacketEx()
 				buffPtr->bkey = bkey;
 				buffPtr->TimeStamp = TimeStamp;
 				m_SendBuflist.pushBack(buffPtr);
-				if(1)
-				{
-					FILE * m_pFileStream;
-					char filePath[128]={0};
-					sprintf(filePath,"h264//%d_%d.h264",m_CdevSdkParam.m_CdevChannelDeviceParam.m_nPlatDevPort,m_CdevSdkParam.m_CdevChannelDeviceParam.m_nRtspServerStartPort);
-					//以追加的方式打开文件流
-					m_pFileStream = fopen(filePath, "ab+");
-					//fwrite((uint8_t *)temp,sizeof(temp),1,m_pFileStream);
-					fwrite((uint8_t *)m_h264Buf,nh264Size,1,m_pFileStream);
-					fflush(m_pFileStream);
-					fclose(m_pFileStream);	
-				}
+				#ifdef		DEBUG_FILE
+				FILE * m_pFileStream;
+				char filePath[128]={0};
+				sprintf(filePath,"h264//%d_%d.h264",m_CdevSdkParam.m_CdevChannelDeviceParam.m_nPlatDevPort,m_CdevSdkParam.m_CdevChannelDeviceParam.m_nRtspServerStartPort);
+				//以追加的方式打开文件流
+				m_pFileStream = fopen(filePath, "ab+");
+				//fwrite((uint8_t *)temp,sizeof(temp),1,m_pFileStream);
+				fwrite((uint8_t *)m_h264Buf,nh264Size,1,m_pFileStream);
+				fflush(m_pFileStream);
+				fclose(m_pFileStream);	
+				#endif
 				//handleVideo((uint8_t *)m_h264Buf,nh264Size, TimeStamp,bkey);
 				return true;
 			}

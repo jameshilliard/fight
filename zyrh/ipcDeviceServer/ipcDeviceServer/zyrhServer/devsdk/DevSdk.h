@@ -92,6 +92,7 @@ public:
 	int m_nAnalyzeHandle;
 	void *m_nAnalyzeHandlePtr;
 	int m_nSystem_Format;
+	int m_firstFramePrefix;
 	boost::asio::detail::mutex mutex_Lock;
 	boost::asio::detail::mutex mutex_HandleVideo;
 	bool m_firstKey;
