@@ -250,7 +250,7 @@ void DeviceServerConnection::run()
 	char buffer[BUFFER_SIZE];
 	Timespan mTimespan(30,0);
 	socket().setReceiveTimeout(mTimespan);
-	//NET_INFO(("tcpServer:%d new connect this=0x%x\n",this));
+	NET_INFO(("this:ox%x,tcpServer:%d new connect\n",this,m_IpcDeviceParams->m_commServerPort));
 	while(1)
 	{
 		int iRet =socket().receiveBytes(&cmdLength, sizeof(cmdLength));
@@ -265,7 +265,7 @@ void DeviceServerConnection::run()
 			cmdLength=ntohl(cmdLength);
 			if(cmdLength>20*1024)
 			{
-				NET_INFO(("tcpServer:%d receive data error %d\n",m_IpcDeviceParams->m_commServerPort,cmdLength));
+				NET_INFO(("this:ox%x,tcpServer:%d receive data error %d\n",this,m_IpcDeviceParams->m_commServerPort,cmdLength));
 				socket().shutdown();
 				break;
 			}
@@ -274,7 +274,7 @@ void DeviceServerConnection::run()
 			{
 				memcpy(buffer,&cmdLength,sizeof(cmdLength));
 				iRet = reloveOnePacket(socket(),buffer,cmdLength,m_IpcDeviceParams,mNetCmd);
-				NET_INFO(("tcpServer:%d reloveOnePacket is %d\n",m_IpcDeviceParams->m_commServerPort,iRet));
+				NET_INFO(("this:ox%x,tcpServer:%d reloveOnePacket is %d\n",this,m_IpcDeviceParams->m_commServerPort,iRet));
 				if(mNetCmd==NETCMD_ALARMCHAN_V30)
 				{
 					char tempString[]={0x00,0x00,0x00,0x08,0x00,0x00,0x00,0x2};
@@ -283,11 +283,11 @@ void DeviceServerConnection::run()
 					while(1)
 					{
 						Sleep(5000);
-						NET_INFO(("tcpServer:%d iRet %d beat send\n",m_IpcDeviceParams->m_commServerPort,iRet));
+						NET_INFO(("this:ox%x,tcpServer:%d iRet %d beat send\n",this,m_IpcDeviceParams->m_commServerPort,iRet));
 						iRet=socket().sendBytes((char *)&tempString, sizeof(tempString),0);
 						if(iRet<=0)
 						{
-							NET_INFO(("tcpServer:%d iRet %d beat error\n",m_IpcDeviceParams->m_commServerPort,iRet));
+							NET_INFO(("this:ox%x,tcpServer:%d iRet %d beat error\n",this,m_IpcDeviceParams->m_commServerPort,iRet));
 							socket().shutdown();
 							return;
 						}
@@ -296,7 +296,8 @@ void DeviceServerConnection::run()
 			}
 			else
 			{
-				NET_INFO(("tcpServer:%d receive data no enough is %d\n",m_IpcDeviceParams->m_commServerPort,iRet));
+				Sleep(100);
+				NET_INFO(("this:ox%x,tcpServer:%d receive data no enough is %d\n",this,m_IpcDeviceParams->m_commServerPort,iRet));
 				socket().shutdown();
 				break;
 			}
@@ -304,12 +305,13 @@ void DeviceServerConnection::run()
 		else if(iRet<=0)
 		{
 			//NET_INFO(("tcpServer:%d iRet %d breakout\n",m_IpcDeviceParams->m_commServerPort,iRet));
+			Sleep(100);
 			socket().shutdown();
 			break;
 		}
 		Sleep(100);
 	}
-	NET_INFO(("tcpServer:%d new connect over this=0x%x\n",m_IpcDeviceParams->m_commServerPort,this));
+	NET_INFO(("this:ox%x,tcpServer:%d new connect over\n",this,m_IpcDeviceParams->m_commServerPort));
 
 }
 	
@@ -400,6 +402,7 @@ void DeviceServer::runCommServerActivity()
 	}
 	srv.stop();
 	g_logger.TraceInfo("commServer over:%s:%d",m_ipcDeviceParams->m_sLocalIpaddr.c_str(),m_ipcDeviceParams->m_commServerPort);
+	Sleep(1000);
 }
 
 

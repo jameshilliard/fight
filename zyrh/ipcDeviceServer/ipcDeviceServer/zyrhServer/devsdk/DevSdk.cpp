@@ -873,8 +873,8 @@ bool CdevSdk::GetVideoData(unsigned char *ptData,unsigned int &fFrameSize,unsign
 	}	
 	else if(frameSize>0)
 	{	
-		printf("tcp=%d,rtsp=%d,time=%d,leftPackNum=%d,thisPtr=0x%x,fFrameSize=%d,fMaxSize=%d,timeStamp=%ld\n",m_CdevSdkParam.m_CdevChannelDeviceParam.m_nPlatDevPort,m_CdevSdkParam.m_CdevChannelDeviceParam.m_nRtspServerStartPort,GetTickCount(),lelfPackNums,this,frameSize,dataMaxSize,videoBuffer.TimeStamp);
-		
+		if(videoBuffer.bKey==true)
+			printf("tcp=%d,rtsp=%d,time=%d,leftPackNum=%d,thisPtr=0x%x,fFrameSize=%d,fMaxSize=%d,timeStamp=%ld\n",m_CdevSdkParam.m_CdevChannelDeviceParam.m_nPlatDevPort,m_CdevSdkParam.m_CdevChannelDeviceParam.m_nRtspServerStartPort,GetTickCount(),lelfPackNums,this,frameSize,dataMaxSize,videoBuffer.TimeStamp);
 		memcpy(ptData,videoBuffer.buffer.c_str(),frameSize);
 		fFrameSize=frameSize;
 		fNumTruncatedBytes=0;

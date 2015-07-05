@@ -341,6 +341,7 @@ void CDevManager::StartUpateDeviceInfo()
 				//if(strOnlineDeviceRet.find("string")!=string::npos)
 					//printf("---%s---\n",strOnlineDeviceRet.c_str());
 				decodeDeviceInfo(strRet,sCdevSdkParam,strOnlineDeviceRet);
+				g_logger.TraceInfo("StartUpateDeviceInfo success");
 				Sleep(30000);
 			}
 			else

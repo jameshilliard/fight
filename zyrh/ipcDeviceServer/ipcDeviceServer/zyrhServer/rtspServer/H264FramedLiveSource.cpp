@@ -18,7 +18,6 @@ void H264FramedLiveSource::setDeviceSource(CdevSdk *deviceSource)
 	m_ptCdevSdk = deviceSource;
 	m_ptCdevSdk->ReStartDev();
 	m_ptCdevSdk->GetKeyFrame();
-	printf("start frame source is 0x%x---\n",this);
 }
 
 H264FramedLiveSource* H264FramedLiveSource::createNew(UsageEnvironment& env, CdevSdk *ptCdevSdk, unsigned preferredFrameSize, unsigned playTimePerFrame)
@@ -48,7 +47,7 @@ void H264FramedLiveSource::doGetNextFrame()
 	sleepTime=25000;
 	if(bRet==true && fFrameSize>0 && m_lelfPackNums>5)
 	{
-		sleepTime=0;
+		sleepTime=5000;
 	}
 	if(bRet==true && fFrameSize>0)
 	{
