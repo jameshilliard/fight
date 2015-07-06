@@ -97,6 +97,7 @@
 			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
 			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="1"
+			UseOfMFC="0"
 			CharacterSet="2"
 			WholeProgramOptimization="1"
 			>
@@ -143,7 +144,7 @@
 				LinkIncremental="1"
 				GenerateDebugInformation="true"
 				GenerateMapFile="true"
-				SubSystem="1"
+				SubSystem="2"
 				HeapReserveSize="0"
 				HeapCommitSize="0"
 				StackReserveSize="1000000"
@@ -548,6 +549,14 @@
 			Name="rtspServer"
 			>
 			<File
+				RelativePath=".\rtspServer\DynamicRTSPServer.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\rtspServer\DynamicRTSPServer.hh"
+				>
+			</File>
+			<File
 				RelativePath=".\rtspServer\H264FramedLiveSource.cpp"
 				>
 			</File>
@@ -561,6 +570,10 @@
 			</File>
 			<File
 				RelativePath=".\rtspServer\H264LiveVideoServerMediaSubssion.hh"
+				>
+			</File>
+			<File
+				RelativePath=".\rtspServer\live555MediaServer.cpp"
 				>
 			</File>
 		</Filter>
@@ -773,6 +786,18 @@
 			>
 			<File
 				RelativePath=".\AnalyzeData.lib"
+				>
+			</File>
+			<File
+				RelativePath=".\devsdk\AnalyzeDataDefine.h"
+				>
+			</File>
+			<File
+				RelativePath=".\devsdk\AnalyzeDataInterface.h"
+				>
+			</File>
+			<File
+				RelativePath=".\devsdk\AnalyzeDataNewInterface.h"
 				>
 			</File>
 			<File

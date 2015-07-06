@@ -967,6 +967,26 @@ STATUS sendNetRetval(StreamSocket  &connfd, UINT32 retVal)
 	return connfd.sendBytes((char *)&netRetHeader, sendlen,0);
 }
 
+STATUS netClientGetWorkStatusV30(StreamSocket  &connfd, char *recvbuff, struct sockaddr_in *pClientSockAddr)
+{
+	NETCMD_HEADER netCmdHeader;
+	struct{
+		NETRET_HEADER header;
+		DVR_WORKSTATUS_V30 workStatus;
+	}netRetDVRStatusV30;
+	UINT32 retVal=NETRET_QUALIFIED,sendLen = sizeof(netRetDVRStatusV30);
+	sendLen = sizeof(netRetDVRStatusV30);
+	bzero((char *)&netRetDVRStatusV30, sendLen);
+	netRetDVRStatusV30.header.length = htonl(sendLen);
+	netRetDVRStatusV30.header.retVal = htonl(retVal);
+	netRetDVRStatusV30.workStatus.deviceStatus = htonl(0);
+	netRetDVRStatusV30.workStatus.localDispStatus = htonl(0);
+	memcpy((char *)&netCmdHeader, recvbuff, sizeof(NETCMD_HEADER));
+	netRetDVRStatusV30.header.retVal = htonl(retVal);
+	netRetDVRStatusV30.header.checkSum = htonl(checkByteSum((char *)&(netRetDVRStatusV30.header.retVal), sendLen-8));
+    //zss++return writen(connfd, (char *)&netRetDVRStatusV30, sendLen);
+	return connfd.sendBytes((char *)&netRetDVRStatusV30, sizeof(netRetDVRStatusV30),0);
+}
 #ifndef SUPPORT_IPV6
 /*
  * =====================================================================

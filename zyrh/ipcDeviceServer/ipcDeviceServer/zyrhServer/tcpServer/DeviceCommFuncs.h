@@ -54,5 +54,6 @@ STATUS netClientReloveCmd1134(StreamSocket  &connfd, char *recvbuff, struct sock
 STATUS netClientPTZControl(StreamSocket  &connfd, char *recvbuff, struct sockaddr_in *pClientSockAddr,NET_PTZ_CTRL_DATA &netPTZCtrlData);
 STATUS netClientPTZControlWithSpeed(StreamSocket  &connfd, char *recvbuff, struct sockaddr_in *pClientSockAddr,NET_PTZ_CTRL_DATA &netPTZCtrlData);
 STATUS netClientGetOSDCfgV30(StreamSocket  &connfd, char *recvbuff, struct sockaddr_in *pClientSockAddr);
+STATUS netClientGetWorkStatusV30(StreamSocket  &connfd, char *recvbuff, struct sockaddr_in *pClientSockAddr);
 
 #endif

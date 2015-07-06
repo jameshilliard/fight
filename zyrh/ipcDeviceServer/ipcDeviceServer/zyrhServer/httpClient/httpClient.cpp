@@ -42,11 +42,13 @@ bool CHTTPClient::HttpPost(const std::string & strUrl,char* buf,int length,std::
 
 	struct hostent * host_addr = gethostbyname(sIp.c_str());
 	if(host_addr==NULL) {
+		closesocket(sock);
 		return false;
 	}
 	sin.sin_addr.s_addr = *((int*)*host_addr->h_addr_list) ;
 
 	if( connect (sock,(const struct sockaddr *)&sin, sizeof(sockaddr_in) ) == -1 ) {
+		closesocket(sock);
 		return false;
 	}
 
@@ -73,6 +75,7 @@ bool CHTTPClient::HttpPost(const std::string & strUrl,char* buf,int length,std::
 	int sendret = send(sock,sendbuf,strlen(sendbuf),0);
 	if (sendbuf <= 0)
 	{
+		closesocket(sock);
 		return false;
 	}
 	int poslen = 0;
@@ -121,10 +124,13 @@ bool CHTTPClient::HttpPost(const std::string & strUrl,char* buf,int length,std::
 		l = recv(sock, (char*)&vcResponse[0], length, 0);
 		if (l != length)
 		{
+			closesocket(sock);
 			return false;
 		}
+		closesocket(sock);
 		return true;
 	}
+	closesocket(sock);
 	return true;
 }  
 bool CHTTPClient::HttpPost(const std::string & strUrl,char* buf,int length,std::string& strResult)  
@@ -140,6 +146,7 @@ bool CHTTPClient::HttpPost(const std::string & strUrl,char* buf,int length,std::
 	sockaddr_in       sin;
 	int sock = socket (AF_INET, SOCK_STREAM, 0);
 	if (sock == -1) {
+		closesocket(sock);
 		return false;
 	}
 	sin.sin_family = AF_INET;
@@ -147,11 +154,13 @@ bool CHTTPClient::HttpPost(const std::string & strUrl,char* buf,int length,std::
 
 	struct hostent * host_addr = gethostbyname(sIp.c_str());
 	if(host_addr==NULL) {
+		closesocket(sock);
 		return false;
 	}
 	sin.sin_addr.s_addr = *((int*)*host_addr->h_addr_list) ;
 
 	if( connect (sock,(const struct sockaddr *)&sin, sizeof(sockaddr_in) ) == -1 ) {
+		closesocket(sock);
 		return false;
 	}
 
@@ -181,6 +190,7 @@ bool CHTTPClient::HttpPost(const std::string & strUrl,char* buf,int length,std::
 	int sendret = send(sock,sendbuf,strlen(sendbuf),0);
 	if (sendbuf <= 0)
 	{
+		closesocket(sock);
 		return false;
 	}
 	int poslen = 0;
@@ -243,11 +253,14 @@ bool CHTTPClient::HttpPost(const std::string & strUrl,char* buf,int length,std::
 		l = recv(sock, (char*)&vcResponse[0], length, 0);
 		if (l != length)
 		{
+			closesocket(sock);
 			return false;
 		}
 		strResult = (char*)&vcResponse[0];
+		closesocket(sock);
 		return true;
 	}
+	closesocket(sock);
 	return true;
 }
 bool CHTTPClient::HttpGet(const std::string & strUrl,std::string& strResult)  

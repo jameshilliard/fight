@@ -235,6 +235,10 @@ STATUS DeviceServerConnection::reloveOnePacket(StreamSocket  &connfd,char *recvb
 		NET_INFO(("NETCMD_GET_VIDEOEFFECT\n"));
 		retVal=connfd.sendBytes((char *)&string_GET_VIDEOEFFECT, sizeof(string_GET_VIDEOEFFECT),0);
 		break;
+	//case NETCMD_GET_WORKSTATUS_V30:		/*get workstatus V30*/
+	//	NET_INFO(("NETCMD_GET_WORKSTATUS_V30.\n"));
+	//	retVal = netClientGetWorkStatusV30(connfd, recvbuff, pClientSockAddr);
+	//	break;
 	default:
 		NET_INFO(("no support cmd. 0x%x\n",netCmdHeader.netCmd));
 		retVal=connfd.sendBytes((char *)&string_DEFAULT, sizeof(string_DEFAULT),0);
@@ -257,7 +261,6 @@ void DeviceServerConnection::run()
 		if(m_IpcDeviceParams->m_beatEnable==0 && m_IpcDeviceParams->m_isOnline==0)
 		{
 			Sleep(5000);
-			socket().shutdown();
 			break;
 		}
 		if(iRet==sizeof(cmdLength))
@@ -266,7 +269,6 @@ void DeviceServerConnection::run()
 			if(cmdLength>20*1024)
 			{
 				NET_INFO(("this:ox%x,tcpServer:%d receive data error %d\n",this,m_IpcDeviceParams->m_commServerPort,cmdLength));
-				socket().shutdown();
 				break;
 			}
 			iRet = socket().receiveBytes(buffer+sizeof(cmdLength),cmdLength-4);
@@ -298,7 +300,6 @@ void DeviceServerConnection::run()
 			{
 				Sleep(100);
 				NET_INFO(("this:ox%x,tcpServer:%d receive data no enough is %d\n",this,m_IpcDeviceParams->m_commServerPort,iRet));
-				socket().shutdown();
 				break;
 			}
 		}
@@ -306,11 +307,11 @@ void DeviceServerConnection::run()
 		{
 			//NET_INFO(("tcpServer:%d iRet %d breakout\n",m_IpcDeviceParams->m_commServerPort,iRet));
 			Sleep(100);
-			socket().shutdown();
 			break;
 		}
 		Sleep(100);
 	}
+	socket().shutdown();
 	NET_INFO(("this:ox%x,tcpServer:%d new connect over\n",this,m_IpcDeviceParams->m_commServerPort));
 
 }

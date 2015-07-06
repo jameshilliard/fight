@@ -93,6 +93,7 @@
 #define MAX_IP_ALARMIN		128
 #define MAX_IP_ALARMOUT		64
 
+#define MAX_HD_COUNT			33				/* 最多33个硬盘(包括16个内置SATA硬盘、1个eSATA硬盘和16个NFS盘) */
 
 /*analog + IP*/
 #define MAX_ANALOG_ALARMIN			MAX_ALARMIN 
@@ -1129,7 +1130,7 @@ typedef struct
 } ZONE;
 
 #define CHANNEL_MAIN			1				/*主口*/
-
+#define MAX_LINK				6       //8000设备单通道最大视频流连接数
 //NETPARAM_PIC_CFG_V30
 typedef struct{
 	UINT32 	length;
@@ -1155,7 +1156,54 @@ typedef struct{
 	UINT8	res2[24-16];
 }NETPARAM_PIC_CFG_V30;
 
+/* DVR 工作状态 */
+typedef struct{
+	UINT8	bRecStarted;		/* 是否录象，1--录象/0--不录象 */
+	UINT8	bViLost;			/* VI信号丢失，0--正常/1--丢失 */
+	UINT8	chanStatus;			/* 通道硬件状态，0--正常/1--异常 */
+	UINT8	res1;
+	UINT32	bitRate;			/* 实际码率 */
+	UINT32	netLinks;			/* 客户端连接数 */
+	UINT32	clientIP[MAX_LINK];	/* 客户端IP地址 */
+}ENC_CHAN_STATUS;
 
+typedef struct{
+	UINT8	bRecStarted;		/* 是否录象，1--录象/0--不录象 */
+	UINT8	bViLost;			/* VI信号丢失，0--正常/1--丢失 */
+	UINT8	chanStatus;			/* 通道硬件状态，0--正常/1--异常 */
+	UINT8	res1;
+	UINT32	bitRate;			/* 实际码率 */
+	UINT32	netLinks;			/* 客户端连接数 */
+	U_IN_ADDR clientIP[MAX_LINK];	/* 客户端IP地址 */
+	UINT32	ipcNetLinks;			/* IPC 连接数 */
+	UINT8  	res[12];
+}ENC_CHAN_STATUS_V30;
+
+typedef struct{
+	UINT32	totalSpace;
+	UINT32	freeSpace;
+	UINT32	diskStatus;			/* bit 0 -- idle, bit 1 -- error */
+}HDISK_STATUS;
+
+typedef struct{
+	UINT32	deviceStatus;			/* 设备的状态,0-正常,1-CPU占用率太高,超过85%,2-硬件错误,例如串口死掉 */
+	HDISK_STATUS hdStatus[MAX_DISKNUM_8000];
+	ENC_CHAN_STATUS chanStatus[MAX_CHANNUM_8000];
+	UINT8  	alarmInStatus[MAX_ALARMIN_8000];
+	UINT8	alarmOutStatus[MAX_ALARMOUT_8000];
+	UINT32  localDispStatus;		/* 本地显示状态,0-正常,1-不正常 */
+}DVR_WORKSTATUS;
+
+typedef struct{
+	UINT32		 deviceStatus;			/* 设备的状态,0-正常,1-CPU占用率太高,超过85%,2-硬件错误,例如串口死掉 */
+	HDISK_STATUS hdStatus[MAX_DISKNUM_V30];
+	ENC_CHAN_STATUS_V30 chanStatus[MAX_CHANNUM_V30];
+	UINT8  	alarmInStatus[MAX_ALARMIN_V30];
+	UINT8	alarmOutStatus[MAX_ALARMOUT_V30];
+	UINT32  localDispStatus;		/* 本地显示状态,0-正常,1-不正常 */
+	UINT8   audioInChanStatus;
+	UINT8   res[35];
+}DVR_WORKSTATUS_V30;
 
 //security.h
 /* defines */
