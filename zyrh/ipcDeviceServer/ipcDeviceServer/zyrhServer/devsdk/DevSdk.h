@@ -117,10 +117,12 @@ public:
 	CM3u8List m_pM3u8List;
 
 	typedef boost::shared_ptr<boost::asio::deadline_timer> timer_ptr;
+	#if 0
 	timer_ptr m_io_timer_Ptr;
 	timer_ptr m_rtsp_timer_Ptr;
 	boost::asio::io_service* m_pIoService;
 	boost::asio::io_service* m_pRtspService;
+	#endif
 	int nTimeTest;
 	int m_nType;
 	std::string m_srtmpurl;

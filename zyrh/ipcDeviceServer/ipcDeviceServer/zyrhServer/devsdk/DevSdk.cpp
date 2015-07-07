@@ -395,6 +395,7 @@ CdevSdk::CdevSdk()
 	m_nAnalyzeHandle = -1;
 	m_nAnalyzeHandlePtr=NULL;
 	m_nTimeNow = time(NULL);
+	#if 0
 	boost::asio::io_service& _IoService = CGlobalClass::GetInstance()->GetIoservice()->get_io_service();
 	m_io_timer_Ptr.reset(new boost::asio::deadline_timer(_IoService) );
 	m_pIoService = &_IoService;
@@ -403,6 +404,8 @@ CdevSdk::CdevSdk()
 	m_rtsp_timer_Ptr.reset(new boost::asio::deadline_timer(_RtspService) );
 	m_pRtspService = &_RtspService;
 
+	#endif
+	
 	m_firstKey=true;
 	m_restartSDKFlag=false;
 	m_bStop = false;
@@ -420,6 +423,7 @@ CdevSdk::CdevSdk()
 CdevSdk::~CdevSdk()
 {
 	delete[] m_h264Buf;
+	#if 0
 	if (m_io_timer_Ptr)
 	{
 		m_io_timer_Ptr.reset();
@@ -430,10 +434,11 @@ CdevSdk::~CdevSdk()
 		m_rtsp_timer_Ptr.reset();
 
 	}
-
+	#endif
 	stopRtspServerThread();
 	m_DeviceServer.stop();
 }
+#if 0
 void CdevSdk::OnTime(const boost::system::error_code& e)
 {
 // 	if ( e == boost::asio::error::operation_aborted)
@@ -489,6 +494,7 @@ void CdevSdk::RtspOnTime(const boost::system::error_code& e)
 	m_rtsp_timer_Ptr->expires_from_now(boost::posix_time::seconds(5));
 	m_rtsp_timer_Ptr->async_wait(boost::bind(&CdevSdk::RtspOnTime,shared_from_this(),boost::asio::placeholders::error));
 }
+#endif
 int CdevSdk::StartDev(char* sServerIp,unsigned int nServerPort,unsigned int nServerLine,char* sdevId,char* password,unsigned int nDevLine,unsigned int nchannel,int nType)
 {
 	boost::asio::detail::mutex::scoped_lock lock(mutex_Lock);
@@ -518,8 +524,10 @@ int CdevSdk::StartDev(char* sServerIp,unsigned int nServerPort,unsigned int nSer
 		nDevLine,//dev_line:设备线路号
 		CBF_OnStreamPlay, this,(int*)&m_stream_handle);
 	g_logger.TraceInfo("sdk取流 设备ID:%s 设备通道号:%d,设备线路号:%d,m_wmp_handle:%d,取流返回:%d ",m_sDevId.c_str(),m_nnchannel,m_nDevLine,m_wmp_handle,ret);
+	#if 0
 	m_io_timer_Ptr->expires_from_now(boost::posix_time::seconds(5));
 	m_io_timer_Ptr->async_wait(boost::bind(&CdevSdk::OnTime,shared_from_this(),boost::asio::placeholders::error));
+	#endif
 	return ret;
 }
 
@@ -557,8 +565,10 @@ int CdevSdk::StartDev(CdevSdkParam cdevSdkParam)
 		}	
 		m_DeviceServer.start();
 		StartRtspServerThread();
+		#if 0
 		m_rtsp_timer_Ptr->expires_from_now(boost::posix_time::seconds(5));
 		m_rtsp_timer_Ptr->async_wait(boost::bind(&CdevSdk::RtspOnTime,shared_from_this(),boost::asio::placeholders::error));
+		#endif
 	}
 	return 0;
 }
@@ -592,8 +602,10 @@ bool CdevSdk::StartDev()
 		m_nDevLine,//dev_line:设备线路号
 		CBF_OnStreamPlay, (void*)this,(int *)&m_stream_handle);
 	g_logger.TraceInfo("sdk 控制端口:%d rtsp服务端口:%d ,sdk重新取流 设备ID:%s 设备通道号:%d,设备线路号:%d,m_wmp_handle:%d,取流返回:%d ",m_CdevSdkParam.m_CdevChannelDeviceParam.m_nPlatDevPort,m_CdevSdkParam.m_CdevChannelDeviceParam.m_nRtspServerStartPort,m_sDevId.c_str(),m_nnchannel,m_nDevLine,m_wmp_handle,ret);
+	#if 0
 	m_io_timer_Ptr->expires_from_now(boost::posix_time::seconds(5));
 	m_io_timer_Ptr->async_wait(boost::bind(&CdevSdk::OnTime,shared_from_this(),boost::asio::placeholders::error));
+	#endif
 	if (ret != 0)
 	{
 		return false;
@@ -685,6 +697,7 @@ void CdevSdk::StopDev()
 {
 	boost::asio::detail::mutex::scoped_lock lock(mutex_Lock);
 	m_bStop = true;
+	#if 0
 	if (m_io_timer_Ptr)
 	{
 		m_io_timer_Ptr->cancel();
@@ -693,6 +706,7 @@ void CdevSdk::StopDev()
 	{
 		m_rtsp_timer_Ptr->cancel();
 	}
+	#endif
 	if (m_wmp_handle != -1)
 	{
 		WMP_Stop(m_wmp_handle,m_stream_handle);
