@@ -1223,6 +1223,7 @@ bool CdevSdk::Ps_AnalyzeDataGetPacketEx()
 			}
 
 		}
+#if 0
 		else if (stPacket.nPacketType == AUDIO_PACKET)
 		{
 			pes_packae_header pes_packae_header_;
@@ -1289,6 +1290,7 @@ bool CdevSdk::Ps_AnalyzeDataGetPacketEx()
 				return true;
 			}
 		}
+#endif
 	}
 	return false;
 }
@@ -1324,7 +1326,7 @@ int CdevSdk::startRtspServer()
 		return -1;
 	//…Ë÷√ª∑æ≥
 	UsageEnvironment* env;
-	if(0)//(m_CdevSdkParam.m_CdevChannelDeviceParam.m_sLocalIpaddr!="")
+	if(m_CdevSdkParam.m_CdevChannelDeviceParam.m_sLocalIpaddr!="")
 	{
 		NetAddressList addresses(m_CdevSdkParam.m_CdevChannelDeviceParam.m_sLocalIpaddr.c_str());
 		if (addresses.numAddresses() != 0) {
