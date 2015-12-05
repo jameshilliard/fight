@@ -144,13 +144,13 @@
 				LinkIncremental="1"
 				GenerateDebugInformation="true"
 				GenerateMapFile="true"
-				SubSystem="2"
+				SubSystem="1"
 				HeapReserveSize="0"
 				HeapCommitSize="0"
-				StackReserveSize="1000000"
+				StackReserveSize="0"
 				StackCommitSize="0"
-				OptimizeReferences="2"
-				EnableCOMDATFolding="2"
+				OptimizeReferences="0"
+				EnableCOMDATFolding="0"
 				TargetMachine="1"
 			/>
 			<Tool

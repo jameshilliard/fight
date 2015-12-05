@@ -615,7 +615,7 @@ bool CdevSdk::StartDev()
 bool CdevSdk::ReStartDev()
 {
 	boost::asio::detail::mutex::scoped_lock lock(mutex_Lock);
-	if(((GetTickCount()-m_rtspTime)<6000) && (m_wmp_handle != -1))
+	if(((GetTickCount()-m_rtspTime)<12000) && (m_wmp_handle != -1))
 	{
 		printf("nowtime is %d - m_rtspTime %d = %d",GetTickCount(),m_rtspTime,(GetTickCount()-m_rtspTime));
 		return true;
@@ -652,18 +652,24 @@ bool CdevSdk::ReStartDev()
 		return false;
 	}
 	unsigned int stream_type=0;
+	unsigned int nConnectType=0;
 	if(m_CdevSdkParam.m_CdevChannelDeviceParam.m_nStreamType==0)
 		stream_type=1;
 	else
 		stream_type=2;
+	if(m_CdevSdkParam.m_CdevChannelDeviceParam.m_nConnectType==0)
+		nConnectType=2;
+	else
+		nConnectType=1;
 	ret = WMP_Play(m_wmp_handle,
 		m_sDevId.c_str(),//devid:设备ID
 		m_nnchannel,//channel:设备通道号
 		stream_type, //stream_type:WMP_STREAM_MAIN 1-主码流   WMP_STREAM_SUB 2-子码流 
-		m_CdevSdkParam.m_CdevChannelDeviceParam.m_nConnectType,//trans_mode:WMP_TRANS_TCP/WMP_TRANS_UDP  #define WMP_TRANS_TCP	1#define WMP_TRANS_UDP	2
+		nConnectType,//trans_mode:WMP_TRANS_TCP/WMP_TRANS_UDP  #define WMP_TRANS_TCP	1#define WMP_TRANS_UDP	2
 		m_nDevLine,//dev_line:设备线路号
 		CBF_OnStreamPlay, this,(int *)&m_stream_handle);
-	g_logger.TraceInfo("sdk 控制端口:%d rtsp服务端口:%d 重新取流 设备ID:%s 设备通道号:%d,设备线路号:%d,m_wmp_handle:%d,主次码流:%d,取流返回:%d ",m_CdevSdkParam.m_CdevChannelDeviceParam.m_nPlatDevPort,m_CdevSdkParam.m_CdevChannelDeviceParam.m_nRtspServerStartPort,m_sDevId.c_str(),m_nnchannel,m_nDevLine,m_wmp_handle,stream_type,ret);
+	g_logger.TraceInfo("sdk 控制端口:%d rtsp服务端口:%d 重新取流 设备ID:%s 设备通道号:%d,主次码流:%d,传输类型:%d,设备线路号:%d,取流返回:%d "
+	,m_CdevSdkParam.m_CdevChannelDeviceParam.m_nPlatDevPort,m_CdevSdkParam.m_CdevChannelDeviceParam.m_nRtspServerStartPort,m_sDevId.c_str(),m_nnchannel,stream_type,nConnectType,m_nDevLine,ret);
 		
 	if (ret != 0)
 	{
