@@ -2,6 +2,7 @@
 #include "DevSdk.h"
 #include <GlobalParam.h>
 #include <GlobalFun.h>
+#include "devsdk/wmpclient.h"
 #include "httpClient/httpClient.h"
 #include "xml/tinyxml/tinyxml.h"
 #include <Map>
@@ -357,8 +358,21 @@ void CDevManager::StartUpateDeviceInfo()
 		}
 	}
 }
-void CDevManager::UpateDeviceInfo()
+
+bool CDevManager::Init()
 {
+	if(!App::Init())
+		return false;
+	g_logger.TraceInfo("服务已正常开始.");
+	WMP_Init();
 	m_bDevManagerStart=true;
 	m_UpateDeviceInfoThread.StartThread(boost::bind(&CDevManager::StartUpateDeviceInfo,this));	
+}
+
+void CDevManager::Uninit()
+{
+	m_bDevManagerStart=false;
+	WMP_Cleanup();
+	g_logger.TraceInfo("服务已正常停止.");
+	App::Uninit();
 }

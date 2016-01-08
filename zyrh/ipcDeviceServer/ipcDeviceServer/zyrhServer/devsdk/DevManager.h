@@ -2,13 +2,19 @@
 #include "stdafx.h"
 #include <publicHead.h>
 #include "Thread.h"
+#include <utils/app.h>
+
+
 class CdevSdk;
 class CdevSdkParam;
-class CDevManager
+class CDevManager :
+	public App
 {
 public:
 	CDevManager();
 	~CDevManager();
+	virtual bool Init();
+	virtual void Uninit();
 	int AddNewDev(std::string sDevID,unsigned int nDevLine,unsigned int nChannel,int nType,std::string sUrl = "");
 	int AddNewDev(CdevSdkParam mCdevSdkParam);
 	boost::shared_ptr<CdevSdk> GetDev(std::string sDevId,int nChannel);
@@ -19,7 +25,6 @@ public:
 	void StartCheckTimeOut();
 	void CheckDevTimeOut();
 	void StartUpateDeviceInfo();
-	void UpateDeviceInfo();
 	BOOL decodeDeviceInfo(std::string deviceInfoString,CdevSdkParam &mCdevSdkParam,std::string strOnlineDevice);
 
 private:

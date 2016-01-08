@@ -99,7 +99,7 @@
 			ConfigurationType="1"
 			UseOfMFC="0"
 			CharacterSet="2"
-			WholeProgramOptimization="1"
+			WholeProgramOptimization="0"
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
@@ -120,7 +120,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				EnableIntrinsicFunctions="true"
-				AdditionalIncludeDirectories="./rtmp;./server;./headfile;./;./32/include;./devsdk/rtmp"
+				AdditionalIncludeDirectories="./include;./rtmp;./server;./headfile;./;./32/include;./devsdk/rtmp"
 				PreprocessorDefinitions="WIN32;NDEBUG;_CONSOLE"
 				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="true"
@@ -140,8 +140,10 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
+				AdditionalDependencies="xshell.lib utils.lib"
 				OutputFile="$(OutDir)\wmp-plServer.exe"
 				LinkIncremental="1"
+				AdditionalLibraryDirectories="E:\company\zhongyanruihua\SVN\trunk\wmp\public\lib\Release"
 				GenerateDebugInformation="true"
 				GenerateMapFile="true"
 				SubSystem="1"
@@ -185,11 +187,7 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
-				RelativePath=".\stdafx.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\zyrhServer.cpp"
+				RelativePath=".\main.cpp"
 				>
 			</File>
 		</Filter>
@@ -1283,6 +1281,102 @@
 						>
 					</File>
 				</Filter>
+			</Filter>
+		</Filter>
+		<Filter
+			Name="include"
+			>
+			<Filter
+				Name="xshell"
+				>
+				<File
+					RelativePath=".\include\xshell\arg_parser.h"
+					>
+				</File>
+				<File
+					RelativePath=".\include\xshell\debug.h"
+					>
+				</File>
+				<File
+					RelativePath=".\include\xshell\dump.h"
+					>
+				</File>
+				<File
+					RelativePath=".\include\xshell\linux_shell.hpp"
+					>
+				</File>
+				<File
+					RelativePath=".\include\xshell\pprocess.h"
+					>
+				</File>
+				<File
+					RelativePath=".\include\xshell\ppworker.hpp"
+					>
+				</File>
+				<File
+					RelativePath=".\include\xshell\win_service.h"
+					>
+				</File>
+				<File
+					RelativePath=".\include\xshell\win_shell.hpp"
+					>
+				</File>
+				<File
+					RelativePath=".\include\xshell\xshell.hpp"
+					>
+				</File>
+			</Filter>
+			<Filter
+				Name="utils"
+				>
+				<File
+					RelativePath=".\include\utils\app.h"
+					>
+				</File>
+				<File
+					RelativePath=".\include\utils\http_client.h"
+					>
+				</File>
+				<File
+					RelativePath=".\include\utils\lock_map.hpp"
+					>
+				</File>
+				<File
+					RelativePath=".\include\utils\md5.h"
+					>
+				</File>
+				<File
+					RelativePath=".\include\utils\pb_utils.h"
+					>
+				</File>
+				<File
+					RelativePath=".\include\utils\sem.hpp"
+					>
+				</File>
+				<File
+					RelativePath=".\include\utils\send_queue.hpp"
+					>
+				</File>
+				<File
+					RelativePath=".\include\utils\sisn.hpp"
+					>
+				</File>
+				<File
+					RelativePath=".\include\utils\ttask.hpp"
+					>
+				</File>
+				<File
+					RelativePath=".\include\utils\ttimer.hpp"
+					>
+				</File>
+				<File
+					RelativePath=".\include\utils\update_time.hpp"
+					>
+				</File>
+				<File
+					RelativePath=".\include\utils\utils.h"
+					>
+				</File>
 			</Filter>
 		</Filter>
 		<File
